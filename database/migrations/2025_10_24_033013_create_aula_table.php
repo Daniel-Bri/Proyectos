@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->integer('capacidad');
-            $table->enum('estado', ['disponible', 'mantenimiento'])->default('disponible');
             $table->enum('tipo', ['aula', 'laboratorio', 'auditorio'])->default('aula');
             $table->timestamps();
         });

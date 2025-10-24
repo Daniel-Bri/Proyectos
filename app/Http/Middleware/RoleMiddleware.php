@@ -4,22 +4,19 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, string $role): Response
     {
-        if (!Auth::check()) {
-            return redirect('/login');
+        if (!auth()->check()) {
+            return redirect()->route('login');
         }
 
-        // Cambia esta línea:
-        // if (Auth::user()->rol !== $role) {
-        
-        // Por esto (con Spatie Permission):
-        if (!Auth::user()->hasRole($role)) {
-            abort(403, 'Acceso denegado.');
+        // Verificar con Spatie
+        if (!auth()->user()->hasRole($role)) {
+            abort(403, "No se pudo acceder");
         }
 
         return $next($request);

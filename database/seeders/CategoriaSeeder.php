@@ -13,5 +13,6 @@ class CategoriaSeeder extends Seeder
         Categoria::create(['nombre' => 'Matemáticas']);
         Categoria::create(['nombre' => 'Física']);
         Categoria::create(['nombre' => 'Investigación']);
+
     }
 }
