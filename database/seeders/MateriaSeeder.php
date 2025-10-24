@@ -2,39 +2,46 @@
 
 namespace Database\Seeders;
 
-use App\Models\Materia;
 use Illuminate\Database\Seeder;
+use App\Models\Materia;
 
 class MateriaSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        Materia::create([
-            'sigla' => 'INF110',
-            'nombre' => 'Introducción a la Informática',
-            'semestre' => 1,
-            'id_categoria' => 1
-        ]);
+        $materias = [
+            [
+                'sigla' => 'INF110',
+                'nombre' => 'Introducción a la Informática',
+                'semestre' => 1,
+                'id_categoria' => 1,
+            ],
+            [
+                'sigla' => 'INF120', 
+                'nombre' => 'Programación I',
+                'semestre' => 1,
+                'id_categoria' => 1,
+            ],
+            [
+                'sigla' => 'INF210',
+                'nombre' => 'Programación II', 
+                'semestre' => 2,
+                'id_categoria' => 1,
+            ],
+            [
+                'sigla' => 'INF119',
+                'nombre' => 'Estructuras Discretas', 
+                'semestre' => 1,
+                'id_categoria' => 2,
+            ],
+            // ... agregar más materias
+        ];
 
-        Materia::create([
-            'sigla' => 'INF119',
-            'nombre' => 'Programación I',
-            'semestre' => 1,
-            'id_categoria' => 1
-        ]);
-
-        Materia::create([
-            'sigla' => 'INF120',
-            'nombre' => 'Programación II',
-            'semestre' => 2,
-            'id_categoria' => 1
-        ]);
-
-        Materia::create([
-            'sigla' => 'MAT115',
-            'nombre' => 'Cálculo I',
-            'semestre' => 1,
-            'id_categoria' => 2
-        ]);
+        foreach ($materias as $materia) {
+            Materia::firstOrCreate(
+                ['sigla' => $materia['sigla']], // Buscar por sigla
+                $materia // Crear si no existe
+            );
+        }
     }
 }

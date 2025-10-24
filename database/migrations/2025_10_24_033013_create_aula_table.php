@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->integer('capacidad');
-            $table->enum('tipo', ['aula', 'laboratorio', 'auditorio'])->default('aula');
+            $table->enum('tipo', ['aula','biblioteca','laboratorio', 'auditorio'])->default('aula');
             $table->timestamps();
         });
     }
