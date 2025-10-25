@@ -12,16 +12,6 @@ class RolController extends Controller
 {
     public function index()
     {
-        // DEBUG: Verificar que llegamos aquí
-    \Log::info('RolController@index ejecutado');
-    dd('Llegaste al controlador de roles'); // Esto detendrá la ejecución y mostrará el mensaje
-
-    if (!auth()->user()->hasRole('admin')) {
-        abort(403, 'No tienes permiso para gestionar roles.');
-    }
-
-    $roles = Role::with('permissions')->paginate(10);
-    return view('admin.roles.index', compact('roles'));
         if (!auth()->user()->hasRole('admin')) {
             abort(403, 'No tienes permiso para gestionar roles.');
         }
