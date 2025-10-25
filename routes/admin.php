@@ -20,9 +20,23 @@ Route::prefix('admin')
 
         // Aquí puedes añadir otras rutas de administración
         // Gestión de Roles
-    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('roles', RolController::class);
-    });
+
+        Route::controller(RolController::class)
+            ->prefix('roles')
+            ->name('roles.')
+            ->group(function () {
+                // CRUD básico de roles
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{role}', 'show')->name('show');
+                Route::get('/{role}/edit', 'edit')->name('edit');
+                Route::put('/{role}', 'update')->name('update');
+                Route::delete('/{role}', 'destroy')->name('destroy');
+                
+                // Acciones adicionales para roles
+                Route::post('/{role}/asignar-permisos', 'asignarPermisos')->name('asignar-permisos');
+            });
 
         // Route::resource('docentes', DocenteController::class);
         // Route::resource('materias', MateriaController::class);
