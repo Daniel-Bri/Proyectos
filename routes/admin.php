@@ -21,18 +21,13 @@ Route::prefix('admin')
         // Aquí puedes añadir otras rutas de administración
         // Gestión de Roles
 
-    Route::controller(RolController::class)
-        ->prefix('roles')
-        ->name('roles.')
-        ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::get('/{id}', 'show')->name('show');
-            Route::get('/{id}/edit', 'edit')->name('edit');
-            Route::put('/{id}', 'update')->name('update');
-            Route::delete('/{id}', 'destroy')->name('destroy');
-        });
+    Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RolController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RolController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{id}', [RolController::class, 'show'])->name('roles.show');
+    Route::get('/roles/{id}/edit', [RolController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{id}', [RolController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{id}', [RolController::class, 'destroy'])->name('roles.destroy');
 
         // Route::resource('docentes', DocenteController::class);
         // Route::resource('materias', MateriaController::class);
