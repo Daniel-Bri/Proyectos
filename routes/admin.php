@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GestionAcademica\AulaController;
 use App\Http\Controllers\Administracion\BitacoraController;
+use App\Http\Controllers\Administracion\RolController;
 
 // Panel administrativo (solo usuarios con rol “admin” o permiso “ver-bitacora”)
 Route::prefix('admin')
@@ -18,6 +19,11 @@ Route::prefix('admin')
         Route::post('/bitacora/limpiar', [BitacoraController::class, 'limpiar'])->name('bitacora.limpiar');
 
         // Aquí puedes añadir otras rutas de administración
+        // Gestión de Roles
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('roles', RolController::class);
+    });
+
         // Route::resource('docentes', DocenteController::class);
         // Route::resource('materias', MateriaController::class);
         // Gestión de Aulas
