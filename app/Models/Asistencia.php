@@ -8,31 +8,36 @@ use Illuminate\Database\Eloquent\Model;
 class Asistencia extends Model
 {
     use HasFactory;
-    protected $table = 'asistencia';
+
+    protected $table = 'asistencias';
+    
     protected $fillable = [
         'fecha',
-        'hora_registro',
+        'hora_registro', 
         'estado',
-        'codigo_docente',
-        'id_grupo_materia',
-        'id_horario'
+        'id_grupo_materia_horario'
     ];
 
-    // Relación con Docente
-    public function docente()
+    protected $casts = [
+        'fecha' => 'date',
+        'hora_registro' => 'datetime'
+    ];
+
+    // Nueva relación
+    public function grupoMateriaHorario()
     {
-        return $this->belongsTo(Docente::class, 'codigo_docente');
+        return $this->belongsTo(GrupoMateriaHorario::class, 'id_grupo_materia_horario');
     }
 
-    // Relación con GrupoMateria
-    public function grupoMateria()
+    // Scope para búsquedas por fecha
+    public function scopePorFecha($query, $fecha)
     {
-        return $this->belongsTo(GrupoMateria::class, 'id_grupo_materia');
+        return $query->where('fecha', $fecha);
     }
 
-    // Relación con Horario
-    public function horario()
+    // Scope para estado específico
+    public function scopePorEstado($query, $estado)
     {
-        return $this->belongsTo(Horario::class, 'id_horario');
+        return $query->where('estado', $estado);
     }
 }

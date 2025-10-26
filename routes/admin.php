@@ -22,4 +22,5 @@ Route::prefix('admin')
         // Route::resource('materias', MateriaController::class);
         // Gestión de Aulas
         Route::resource('aulas', AulaController::class)->names('aulas');
+       
     });

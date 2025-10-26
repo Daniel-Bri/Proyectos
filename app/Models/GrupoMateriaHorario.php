@@ -8,12 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class GrupoMateriaHorario extends Model
 {
     use HasFactory;
+
     protected $table = 'grupo_materia_horario';
+    
     protected $fillable = [
+        'estado_aula',
         'id_grupo_materia',
-        'id_horario',
+        'id_horario', 
         'id_aula',
-        'estado_aula'
+        'id_docente'
     ];
 
     // Relación con GrupoMateria
@@ -34,9 +37,27 @@ class GrupoMateriaHorario extends Model
         return $this->belongsTo(Aula::class, 'id_aula');
     }
 
+    // Relación con Docente
+    public function docente()
+    {
+        return $this->belongsTo(Docente::class, 'id_docente', 'codigo');
+    }
+
     // Relación con Asistencias
     public function asistencias()
     {
-        return $this->hasMany(Asistencia::class, 'id_grupo_materia', 'id_grupo_materia');
+        return $this->hasMany(Asistencia::class, 'id_grupo_materia_horario');
+    }
+
+    // Scope para horarios activos
+    public function scopeActivos($query)
+    {
+        return $query->where('estado_aula', 'ocupado'); // o el estado que uses para activo
+    }
+
+    // Scope para docente específico
+    public function scopePorDocente($query, $docenteId)
+    {
+        return $query->where('id_docente', $docenteId);
     }
 }

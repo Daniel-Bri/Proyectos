@@ -181,6 +181,34 @@
                         </a>
                     </div>
                 </div>
+                <!-- Paquete: Gestión Horarios -->
+                <div class="package-group">
+                    <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
+                        <div class="flex items-center flex-1">
+                            <i class="fas fa-book-open mr-3 w-5 h-5"></i>
+                            <span class="truncate">Gestión Horarios</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                    </button>
+                    <div class="submenu ml-6">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
+                            <i class="fas fa-chalkboard-teacher mr-2 w-4 h-4"></i>
+                            Asignacion manual
+                        </a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
+                            <i class="fas fa-book mr-2 w-4 h-4"></i>
+                            Asignacion automatica
+                        </a>
+                        <a href="{{ route('visualizacion-semana.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                            <i class="fas fa-door-open mr-2 w-4 h-4"></i>
+                            Visualización semanal
+                        </a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
+                            <i class="fas fa-layer-group mr-2 w-4 h-4"></i>
+                            Reportes de aulas disponibles
+                        </a>
+                    </div>
+                </div>
 
                 <!-- Más paquetes... -->
                 <div class="package-group">
