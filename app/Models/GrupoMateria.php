@@ -9,6 +9,7 @@ class GrupoMateria extends Model
 {
     use HasFactory;
     protected $table = 'grupo_materia';
+    
     protected $fillable = [
         'id_gestion',
         'id_grupo',
@@ -27,14 +28,14 @@ class GrupoMateria extends Model
         return $this->belongsTo(Grupo::class, 'id_grupo');
     }
 
-    // Relación con Materia
+    // Relación con Materia (usando sigla como clave)
     public function materia()
     {
         return $this->belongsTo(Materia::class, 'sigla_materia', 'sigla');
     }
 
-    // Relación con GrupoMateriaHorario
-    public function grupoMateriaHorarios()
+    // Relación con Horarios (a través de grupo_materia_horario)
+    public function horarios()
     {
         return $this->hasMany(GrupoMateriaHorario::class, 'id_grupo_materia');
     }
@@ -43,5 +44,11 @@ class GrupoMateria extends Model
     public function asistencias()
     {
         return $this->hasMany(Asistencia::class, 'id_grupo_materia');
+    }
+
+    // Relación con Docentes (si existe relación directa)
+    public function docente()
+    {
+        return $this->belongsTo(Docente::class, 'codigo_docente', 'codigo');
     }
 }

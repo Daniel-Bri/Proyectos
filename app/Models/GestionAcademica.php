@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class GestionAcademica extends Model
 {
     use HasFactory;
+    
     protected $table = 'gestion_academica';
+    
     protected $fillable = [
-        'nombre',
+        'gestion',
+        'periodo',
         'fecha_inicio',
         'fecha_fin',
         'estado'
@@ -20,17 +23,5 @@ class GestionAcademica extends Model
     public function grupoMaterias()
     {
         return $this->hasMany(GrupoMateria::class, 'id_gestion');
-    }
-
-    // Scope para gestión actual
-    public function scopeActual($query)
-    {
-        return $query->where('estado', 'curso');
-    }
-
-    // Scope para gestiones finalizadas
-    public function scopeFinalizadas($query)
-    {
-        return $query->where('estado', 'finalizado');
     }
 }

@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Docente extends Model
 {
-    use HasFactory;
     protected $table = 'docente';
     protected $primaryKey = 'codigo';
     public $incrementing = false;
@@ -21,21 +20,34 @@ class Docente extends Model
         'id_users'
     ];
 
-    // Relación con User
+    // Convertir fecha_contrato automáticamente a Carbon
+    protected function fechaContrato(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => \Carbon\Carbon::parse($value),
+            set: fn ($value) => $value,
+        );
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'id_users');
     }
 
-    // Relación con Carreras (N:M)
     public function carreras()
     {
-        return $this->belongsToMany(Carrera::class, 'docente_carrera', 'codigo_docente', 'id_carrera');
+        // USAR LOS NOMBRES CORRECTOS DE LAS COLUMNAS
+        return $this->belongsToMany(
+            Carrera::class, 
+            'docente_carrera', 
+            'codigo_docente',    // Cambiado a 'codigo_docente'
+            'id_carrera',        // Cambiado a 'id_carrera'
+            'codigo',            // Llave primaria de docente
+            'id'                 // Llave primaria de carrera
+        );
     }
-
-    // Relación con Asistencias
     public function asistencias()
     {
-        return $this->hasMany(Asistencia::class, 'codigo_docente');
+        return $this->hasMany(Asistencia::class, 'codigo_docente', 'codigo');
     }
 }

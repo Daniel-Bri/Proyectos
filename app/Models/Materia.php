@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Materia extends Model
 {
     use HasFactory;
+    
     protected $table = 'materia';
     protected $primaryKey = 'sigla';
     public $incrementing = false;
@@ -26,11 +27,21 @@ class Materia extends Model
         return $this->belongsTo(Categoria::class, 'id_categoria');
     }
 
-    // Relación con Grupos (a través de grupo_materia)
-    public function grupos()
+    // Relación con Carrera
+    public function carrera()
     {
-        return $this->belongsToMany(Grupo::class, 'grupo_materia', 'sigla_materia', 'id_grupo')
-                    ->withPivot('id_gestion')
-                    ->withTimestamps();
+        return $this->belongsTo(Carrera::class, 'id_carrera');
+    }
+
+    // Relación con Docentes (N:M)
+    public function docentes()
+    {
+        return $this->belongsToMany(Docente::class, 'docente_materia', 'sigla_materia', 'codigo_docente');
+    }
+
+    // Relación con GrupoMateria
+    public function grupoMaterias()
+    {
+        return $this->hasMany(GrupoMateria::class, 'sigla_materia', 'sigla');
     }
 }

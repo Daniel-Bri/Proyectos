@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Docente\AsistenciaController;
 
 Route::prefix('docente')
     ->middleware(['auth', 'role:docente'])
@@ -11,5 +10,4 @@ Route::prefix('docente')
             return view('docente.dashboard');
         })->name('dashboard');
 
-        Route::get('/asistencias', [AsistenciaController::class, 'index'])->name('asistencias.index');
     });

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolController;
+use App\Http\Controllers\DocenteController;
 
 // Página de inicio
 Route::get('/', function () {
@@ -37,4 +38,10 @@ Route::get('/debug-auth', function() {
     return "<h1>No autenticado</h1>";
 });
 Route::get('/roles-permisos', [RolController::class, 'index'])->name('roles.permisos');
-
+Route::get('/docentes', [DocenteController::class, 'index'])->name('docentes.index');
+Route::get('/docentes/crear', [DocenteController::class, 'create'])->name('docentes.create');
+Route::post('/docentes', [DocenteController::class, 'store'])->name('docentes.store');
+Route::get('/docentes/{codigo}', [DocenteController::class, 'show'])->name('docentes.show');
+Route::get('/docentes/{codigo}/editar', [DocenteController::class, 'edit'])->name('docentes.edit');
+Route::put('/docentes/{codigo}', [DocenteController::class, 'update'])->name('docentes.update');
+Route::delete('/docentes/{codigo}', [DocenteController::class, 'destroy'])->name('docentes.destroy');

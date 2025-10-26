@@ -35,4 +35,5 @@ class Asistencia extends Model
     {
         return $this->belongsTo(Horario::class, 'id_horario');
     }
+    
 }

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Coordinador\HorarioController;
+
 
 Route::prefix('coordinador')
     ->middleware(['auth', 'role:coordinador'])
@@ -11,5 +11,5 @@ Route::prefix('coordinador')
             return view('coordinador.dashboard');
         })->name('dashboard');
 
-        Route::resource('/horarios', HorarioController::class);
-    });
+        
+    }); 

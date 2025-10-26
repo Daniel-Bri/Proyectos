@@ -11,7 +11,7 @@ class CarreraSeeder extends Seeder
     {
         Carrera::create(['nombre' => 'Ingeniería en Sistemas']);
         Carrera::create(['nombre' => 'Ingeniería Informática']);
-        Carrera::create(['nombre' => 'Ingienería en Redes y Telecomunicaciones']);
+        Carrera::create(['nombre' => 'Ingeniería en Redes y Telecomunicaciones']);
         Carrera::create(['nombre' => 'Ingienería Robotica']);
         Carrera::create(['nombre' => 'Derecho']);
         Carrera::create(['nombre' => 'Ingienería Industrial']);
