@@ -185,14 +185,14 @@
                 <div class="package-group">
                     <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
                         <div class="flex items-center flex-1">
-                            <i class="fas fa-book-open mr-3 w-5 h-5"></i>
+                            <i class="fas fa-calendar-alt mr-3 w-5 h-5"></i>
                             <span class="truncate">Gestión Horarios</span>
                         </div>
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-chalkboard-teacher mr-2 w-4 h-4"></i>
+                        <a href="{{ route('coordinador.horarios.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">                        
+                             <i class="fas fa-chalkboard-teacher mr-2 w-4 h-4"></i>
                             Asignacion manual
                         </a>
                         <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
@@ -210,19 +210,36 @@
                     </div>
                 </div>
 
-                <!-- Más paquetes... -->
+                <!-- Asistencia... -->
                 <div class="package-group">
                     <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
                         <div class="flex items-center flex-1">
-                            <i class="fas fa-clock mr-3 w-5 h-5"></i>
-                            <span class="truncate">Horarios</span>
+                            <i class="fas fa-user-check mr-3 w-5 h-5"></i>
+                            <span class="truncate">Asistencia</span>
                         </div>
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
                         <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
                             <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
-                            Asignar Horarios
+                            Marcar Asistencia
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Reportes... -->
+                <div class="package-group">
+                    <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
+                        <div class="flex items-center flex-1">
+                            <i class="fas fa-chart-bar mr-3 w-5 h-5""></i>
+                            <span class="truncate">Analisis y Reportes</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                    </button>
+                    <div class="submenu ml-6">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
+                            <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
+                            Reportes
                         </a>
                     </div>
                 </div>

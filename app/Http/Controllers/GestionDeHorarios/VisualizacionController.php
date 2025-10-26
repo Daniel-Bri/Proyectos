@@ -8,6 +8,7 @@ use App\Models\Docente;
 use App\Models\Materia;
 use App\Models\Aula;
 use App\Models\GrupoMateriaHorario;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class VisualizacionController extends Controller
     public function index(Request $request)
     {
         // Verificar permisos
-        if (!auth()->user()->hasAnyRole(['admin', 'docente', 'estudiante'])) {
+        if (!auth()->user()->hasAnyRole(['admin', 'docente', 'coordinador'])) {
             abort(403, 'No tienes permisos para ver horarios.');
         }
 
@@ -26,57 +27,22 @@ class VisualizacionController extends Controller
             ? Carbon::parse($request->fecha_inicio)->startOfWeek()
             : Carbon::now()->startOfWeek();
             
+        $codigoDocente = $request->codigo_docente;
         $docenteId = $request->docente_id;
         $materiaId = $request->materia_id;
-        $aulaId = $request->aula_id;
+        $grupoId = $request->grupo_id;
 
         // DEBUG: Mostrar parámetros recibidos
         \Log::info('Filtros recibidos:', [
+            'codigo_docente' => $codigoDocente,
             'docente_id' => $docenteId,
             'materia_id' => $materiaId, 
-            'aula_id' => $aulaId,
+            'grupo_id' => $grupoId,
             'fecha_inicio' => $fechaInicio
         ]);
 
-        // CONSULTA CON JOIN EXPLÍCITO - VERSIÓN FUNCIONAL
-        $query = GrupoMateriaHorario::with([
-                'grupoMateria.materia',
-                'grupoMateria.grupo', 
-                'aula',
-                'docente.user'
-            ])
-            ->join('horario', 'grupo_materia_horario.id_horario', '=', 'horario.id')
-            ->where('grupo_materia_horario.estado_aula', 'ocupado')
-            ->select('grupo_materia_horario.*')
-            ->orderBy('horario.dia')
-            ->orderBy('horario.hora_inicio');
-
-        // Aplicar filtros
-        if ($docenteId) {
-            $query->where('grupo_materia_horario.id_docente', $docenteId);
-            
-            // DEBUG: Verificar si hay resultados con este docente
-            $count = $query->count();
-            \Log::info("Resultados para docente {$docenteId}: {$count}");
-        }
-
-        if ($materiaId) {
-            $query->whereHas('grupoMateria', function($q) use ($materiaId) {
-                $q->where('sigla_materia', $materiaId);
-            });
-        }
-
-        if ($aulaId) {
-            $query->where('grupo_materia_horario.id_aula', $aulaId);
-        }
-
-        $gruposHorarios = $query->get();
-
-        // DEBUG: Verificar resultados finales
-        \Log::info('Resultados obtenidos:', [
-            'total' => $gruposHorarios->count(),
-            'datos' => $gruposHorarios->pluck('id_docente', 'id')
-        ]);
+        // Obtener horarios con filtros aplicados
+        $gruposHorarios = $this->obtenerHorariosConFiltros($codigoDocente, $docenteId, $materiaId, $grupoId);
 
         // Obtener datos para filtros
         $docentes = Docente::with('user')->get()->map(function($docente) {
@@ -87,7 +53,23 @@ class VisualizacionController extends Controller
         });
 
         $materias = Materia::orderBy('nombre')->get();
-        $aulas = Aula::orderBy('nombre')->get();
+        
+        // Obtener grupos para el filtro - CORREGIDO
+        try {
+            $grupos = Grupo::select('id', 'nombre')
+                          ->orderBy('nombre')
+                          ->get()
+                          ->map(function($grupo) {
+                              return [
+                                  'id' => $grupo->id,
+                                  'codigo' => 'GRP' . str_pad($grupo->id, 3, '0', STR_PAD_LEFT),
+                                  'nombre' => $grupo->nombre
+                              ];
+                          });
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener grupos: ' . $e->getMessage());
+            $grupos = collect([]);
+        }
 
         // Formatear horarios para la vista
         $horariosFormateados = $this->formatearHorariosParaVista($gruposHorarios, $fechaInicio);
@@ -96,29 +78,145 @@ class VisualizacionController extends Controller
             'horariosFormateados',
             'docentes',
             'materias',
-            'aulas',
+            'grupos',
             'fechaInicio',
+            'codigoDocente',
             'docenteId',
             'materiaId',
-            'aulaId'
+            'grupoId'
         ));
     }
 
     /**
-     * Formatear horarios para la vista semanal
+     * Nueva función para vista de calendario semanal - CORREGIDA
+     */
+    public function calendario(Request $request)
+    {
+        if (!auth()->user()->hasAnyRole(['admin', 'docente', 'coordinador'])) {
+            abort(403, 'No tienes permisos para ver horarios en calendario.');
+        }
+
+        // Obtener parámetros de filtro
+        $codigoDocente = $request->codigo_docente;
+        $docenteId = $request->docente_id;
+        $materiaId = $request->materia_id;
+        $grupoId = $request->grupo_id;
+        $fechaInicio = $request->filled('fecha_inicio') 
+            ? Carbon::parse($request->fecha_inicio)->startOfWeek()
+            : Carbon::now()->startOfWeek();
+
+        // Obtener horarios con filtros aplicados
+        $gruposHorarios = $this->obtenerHorariosConFiltros($codigoDocente, $docenteId, $materiaId, $grupoId);
+
+        // Obtener datos para filtros
+        $docentes = Docente::with('user')->get()->map(function($docente) {
+            return [
+                'codigo' => $docente->codigo,
+                'nombre' => $docente->user->name ?? 'Sin nombre'
+            ];
+        });
+
+        $materias = Materia::orderBy('nombre')->get();
+        
+        try {
+            $grupos = Grupo::select('id', 'nombre')
+                        ->orderBy('nombre')
+                        ->get()
+                        ->map(function($grupo) {
+                            return [
+                                'id' => $grupo->id,
+                                'codigo' => 'GRP' . str_pad($grupo->id, 3, '0', STR_PAD_LEFT),
+                                'nombre' => $grupo->nombre
+                            ];
+                        });
+        } catch (\Exception $e) {
+            $grupos = collect([]);
+        }
+
+        // Formatear horarios para la vista de calendario
+        $horariosFormateados = $this->formatearHorariosParaVista($gruposHorarios, $fechaInicio);
+
+        return view('visualizacionSemanal.calendario', compact(
+            'horariosFormateados',
+            'docentes',
+            'materias',
+            'grupos',
+            'fechaInicio',
+            'codigoDocente',
+            'docenteId',
+            'materiaId',
+            'grupoId'
+        ));
+    }
+
+    /**
+     * Función auxiliar para obtener horarios con filtros aplicados
+     */
+    private function obtenerHorariosConFiltros($codigoDocente = null, $docenteId = null, $materiaId = null, $grupoId = null)
+    {
+        $query = GrupoMateriaHorario::with([
+                'grupoMateria.materia',
+                'grupoMateria.grupo', 
+                'aula',
+                'docente.user',
+                'horario' // AÑADIR ESTA RELACIÓN
+            ])
+            ->join('horario', 'grupo_materia_horario.id_horario', '=', 'horario.id')
+            ->where('grupo_materia_horario.estado_aula', 'ocupado')
+            ->select('grupo_materia_horario.*', 'horario.dia', 'horario.hora_inicio', 'horario.hora_fin') // SELECCIONAR CAMPOS NECESARIOS
+            ->orderBy('horario.dia')
+            ->orderBy('horario.hora_inicio');
+
+        // DEBUG: Log de los filtros aplicados
+        \Log::info('Aplicando filtros:', [
+            'codigo_docente' => $codigoDocente,
+            'docente_id' => $docenteId,
+            'materia_id' => $materiaId,
+            'grupo_id' => $grupoId
+        ]);
+
+        // Aplicar filtros - CORREGIDO
+        if ($codigoDocente) {
+            $query->whereHas('docente', function($q) use ($codigoDocente) {
+                $q->where('codigo', 'LIKE', '%' . $codigoDocente . '%');
+            });
+            
+            \Log::info('Filtro por código docente aplicado: ' . $codigoDocente);
+        }
+
+        if ($docenteId) {
+            $query->where('grupo_materia_horario.id_docente', $docenteId);
+        }
+
+        if ($materiaId) {
+            $query->whereHas('grupoMateria.materia', function($q) use ($materiaId) {
+                $q->where('sigla', $materiaId);
+            });
+        }
+
+        if ($grupoId) {
+            $query->whereHas('grupoMateria.grupo', function($q) use ($grupoId) {
+                $q->where('id', $grupoId);
+            });
+        }
+
+        $resultados = $query->get();
+        
+        // DEBUG: Log de resultados
+        \Log::info('Resultados obtenidos:', [
+            'total' => $resultados->count(),
+            'filtros' => compact('codigoDocente', 'docenteId', 'materiaId', 'grupoId')
+        ]);
+
+        return $resultados;
+    }
+    /**
+     * Formatear horarios para la vista semanal - CORREGIDO
      */
     private function formatearHorariosParaVista($gruposHorarios, $fechaInicio)
     {
-        // DEBUG: Verificar entrada
-        \Log::info('Datos entrando a formatearHorariosParaVista:', [
-            'total_grupos_horarios' => $gruposHorarios->count(),
-            'primer_registro' => $gruposHorarios->first() ? [
-                'id' => $gruposHorarios->first()->id,
-                'docente' => $gruposHorarios->first()->id_docente,
-                'horario_dia' => $gruposHorarios->first()->horario->dia ?? 'No disponible',
-                'horario_hora' => $gruposHorarios->first()->horario->hora_inicio ?? 'No disponible'
-            ] : 'No hay datos'
-        ]);
+        // Inicializar la variable desde el principio
+        $horariosFormateados = [];
 
         $diasSemana = [
             1 => 'Lunes',
@@ -139,104 +237,66 @@ class VisualizacionController extends Controller
             'SAB' => 6
         ];
 
-        $horariosPorDia = [];
-
         // Inicializar estructura para cada día
         foreach ($diasSemana as $numeroDia => $nombreDia) {
             $fechaDia = $fechaInicio->copy()->addDays($numeroDia - 1);
-            $horariosPorDia[$nombreDia] = [
+            $horariosFormateados[$nombreDia] = [
                 'fecha' => $fechaDia->format('Y-m-d'),
                 'dia_numero' => $numeroDia,
                 'horarios' => []
             ];
         }
 
-        // Agrupar horarios por día - CORREGIDO
+        // Agrupar horarios por día
         foreach ($gruposHorarios as $grupoHorario) {
-            // Obtener el día numérico desde la base de datos
-            $diaDB = $grupoHorario->horario->dia ?? null;
-            $numeroDia = $diasDB[$diaDB] ?? null;
-            
-            if ($numeroDia && isset($diasSemana[$numeroDia])) {
-                $nombreDia = $diasSemana[$numeroDia];
+            try {
+                $diaDB = $grupoHorario->horario->dia ?? null;
+                $numeroDia = $diasDB[$diaDB] ?? null;
                 
-                $grupoMateria = $grupoHorario->grupoMateria;
-                
-                if ($grupoMateria) {
-                    $docenteNombre = $grupoHorario->docente->user->name ?? 'Docente no asignado';
+                if ($numeroDia && isset($diasSemana[$numeroDia])) {
+                    $nombreDia = $diasSemana[$numeroDia];
+                    $grupoMateria = $grupoHorario->grupoMateria;
                     
-                    $horariosPorDia[$nombreDia]['horarios'][] = [
-                        'id' => $grupoHorario->id,
-                        'hora_inicio' => $grupoHorario->horario->hora_inicio ?? 'Sin hora',
-                        'hora_fin' => $grupoHorario->horario->hora_fin ?? 'Sin hora',
-                        'materia' => $grupoMateria->materia->nombre ?? 'Sin materia',
-                        'docente' => $docenteNombre,
-                        'aula' => $grupoHorario->aula->nombre ?? 'Sin aula',
-                        'grupo' => $grupoMateria->grupo->nombre ?? 'Sin grupo',
-                        'color' => $this->getColorMateria($grupoMateria->sigla_materia ?? ''),
-                        'duracion' => $this->calcularDuracion(
-                            $grupoHorario->horario->hora_inicio ?? '00:00:00', 
-                            $grupoHorario->horario->hora_fin ?? '00:00:00'
-                        )
-                    ];
+                    if ($grupoMateria) {
+                        $docenteNombre = $grupoHorario->docente->user->name ?? 'Docente no asignado';
+                        $codigoDocente = $grupoHorario->docente->codigo ?? 'Sin código';
+                        $grupoNombre = $grupoMateria->grupo->nombre ?? 'Sin grupo';
+                        $grupoCodigo = 'GRP' . str_pad($grupoMateria->grupo->id ?? '000', 3, '0', STR_PAD_LEFT);
+                        
+                        $horarioData = [
+                            'id' => $grupoHorario->id,
+                            'hora_inicio' => Carbon::parse($grupoHorario->horario->hora_inicio ?? '00:00:00')->format('H:i'),
+                            'hora_fin' => Carbon::parse($grupoHorario->horario->hora_fin ?? '00:00:00')->format('H:i'),
+
+                            'materia' => $grupoMateria->materia->nombre ?? 'Sin materia',
+                            'sigla_materia' => $grupoMateria->materia->sigla ?? 'Sin sigla',
+                            'docente' => $docenteNombre,
+                            'codigo_docente' => $codigoDocente,
+                            'aula' => $grupoHorario->aula->nombre ?? 'Sin aula',
+                            'grupo' => $grupoNombre,
+                            'grupo_codigo' => $grupoCodigo,
+                            'color' => $this->getColorMateria($grupoMateria->sigla_materia ?? ''),
+                            'duracion' => $this->calcularDuracion(
+                                $grupoHorario->horario->hora_inicio ?? '00:00:00', 
+                                $grupoHorario->horario->hora_fin ?? '00:00:00'
+                            )
+                        ];
+
+                        // Asegurarse de que el día existe en el array
+                        if (isset($horariosFormateados[$nombreDia])) {
+                            $horariosFormateados[$nombreDia]['horarios'][] = $horarioData;
+                        }
+                    }
                 }
-            } else {
-                \Log::warning('Día no reconocido en horario:', [
-                    'id' => $grupoHorario->id,
-                    'dia_db' => $diaDB,
-                    'numero_dia' => $numeroDia
-                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error procesando horario: ' . $e->getMessage());
             }
         }
 
-        // DEBUG: Verificar salida
-        \Log::info('Datos saliendo de formatearHorariosParaVista:', [
-            'total_dias_con_horarios' => count(array_filter($horariosPorDia, function($dia) {
-                return count($dia['horarios']) > 0;
-            })),
-            'horarios_por_dia' => array_map(function($dia) {
-                return count($dia['horarios']);
-            }, $horariosPorDia)
-        ]);
-
-        return $horariosPorDia;
+        return $horariosFormateados;
     }
 
-    /**
-     * Obtener docente asignado a un grupo materia
-     * (Método deshabilitado hasta que exista la tabla docente_grupo_materia)
-     */
-    private function obtenerDocenteDeGrupoMateria($grupoMateriaId)
-    {
-        return 'Docente no asignado';
-        
-        // Código comentado hasta que exista la tabla docente_grupo_materia
-        /*
-        try {
-            $tableExists = DB::select("SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'docente_grupo_materia'
-            ) as exists_table")[0]->exists_table;
-
-            if ($tableExists) {
-                $docente = DB::table('docente_grupo_materia as dgm')
-                    ->join('docente as d', 'dgm.codigo_docente', '=', 'd.codigo')
-                    ->join('users as u', 'd.id_users', '=', 'u.id')
-                    ->where('dgm.id_grupo_materia', $grupoMateriaId)
-                    ->select('u.name as nombre_docente')
-                    ->first();
-
-                return $docente->nombre_docente ?? 'Sin docente asignado';
-            }
-            
-            return 'Docente no asignado';
-            
-        } catch (\Exception $e) {
-            return 'Sin docente';
-        }
-        */
-    }
+    // ... (el resto de los métodos se mantienen igual: apiHorarios, formatearHorariosParaAPI, getDiaNumero, getColorMateria, calcularDuracion, show)
 
     /**
      * API endpoint para obtener horarios (para AJAX)
@@ -244,53 +304,28 @@ class VisualizacionController extends Controller
     public function apiHorarios(Request $request)
     {
         try {
-            // Validar request
             $validated = $request->validate([
                 'fecha_inicio' => 'required|date',
+                'codigo_docente' => 'nullable|string',
                 'docente_id' => 'nullable|string',
                 'materia_id' => 'nullable|string',
-                'aula_id' => 'nullable|integer'
+                'grupo_id' => 'nullable|string'
             ]);
 
             $fechaInicio = Carbon::parse($validated['fecha_inicio'])->startOfWeek();
 
-            $query = Horario::select('horario.*')
-                ->join('grupo_materia_horario as gmh', 'horario.id', '=', 'gmh.id_horario')
-                ->join('grupo_materia as gm', 'gmh.id_grupo_materia', '=', 'gm.id')
-                ->join('materia as m', 'gm.sigla_materia', '=', 'm.sigla')
-                ->join('grupo as g', 'gm.id_grupo', '=', 'g.id')
-                ->join('aula as a', 'gmh.id_aula', '=', 'a.id')
-                ->orderBy('horario.dia')
-                ->orderBy('horario.hora_inicio');
+            $gruposHorarios = $this->obtenerHorariosConFiltros(
+                $validated['codigo_docente'] ?? null,
+                $validated['docente_id'] ?? null,
+                $validated['materia_id'] ?? null,
+                $validated['grupo_id'] ?? null
+            );
 
-            // Aplicar filtros (solo materia y aula)
-            if (!empty($validated['materia_id'])) {
-                $query->where('gm.sigla_materia', $validated['materia_id']);
-            }
-
-            if (!empty($validated['aula_id'])) {
-                $query->where('gmh.id_aula', $validated['aula_id']);
-            }
-
-            $horarios = $query->get();
-
-            // Cargar relaciones
-            $horarios->load([
-                'grupoMateriaHorarios.aula',
-                'grupoMateriaHorarios.grupoMateria.materia',
-                'grupoMateriaHorarios.grupoMateria.grupo'
-            ]);
-
-            $horariosFormateados = $this->formatearHorariosParaAPI($horarios, $fechaInicio);
+            $horariosFormateados = $this->formatearHorariosParaAPI($gruposHorarios, $fechaInicio);
 
             return response()->json([
                 'success' => true,
-                'data' => $horariosFormateados,
-                'semana' => [
-                    'inicio' => $fechaInicio->format('Y-m-d'),
-                    'fin' => $fechaInicio->copy()->endOfWeek()->format('Y-m-d'),
-                    'texto' => $fechaInicio->format('d M') . ' - ' . $fechaInicio->copy()->endOfWeek()->format('d M, Y')
-                ]
+                'data' => $horariosFormateados
             ]);
 
         } catch (\Exception $e) {
@@ -304,32 +339,57 @@ class VisualizacionController extends Controller
     /**
      * Formatear horarios para API
      */
-    private function formatearHorariosParaAPI($horarios, $fechaInicio)
+    private function formatearHorariosParaAPI($gruposHorarios, $fechaInicio)
     {
         $resultado = [];
         
-        foreach ($horarios as $horario) {
-            foreach ($horario->grupoMateriaHorarios as $grupoMateriaHorario) {
-                $grupoMateria = $grupoMateriaHorario->grupoMateria;
+        foreach ($gruposHorarios as $grupoHorario) {
+            $grupoMateria = $grupoHorario->grupoMateria;
+            
+            if ($grupoMateria) {
+                $docenteNombre = $grupoHorario->docente->user->name ?? 'Docente no asignado';
+                $codigoDocente = $grupoHorario->docente->codigo ?? 'Sin código';
+                $grupoCodigo = 'GRP' . str_pad($grupoMateria->grupo->id ?? '000', 3, '0', STR_PAD_LEFT);
                 
-                if ($grupoMateria) {
-                    $resultado[] = [
-                        'id' => $horario->id,
-                        'dia' => $horario->dia - 1,
-                        'hora_inicio' => $horario->hora_inicio,
-                        'hora_fin' => $horario->hora_fin,
-                        'materia' => $grupoMateria->materia->nombre ?? 'Sin materia',
-                        'docente' => 'Docente no asignado',
-                        'aula' => $grupoMateriaHorario->aula->nombre ?? 'Sin aula',
-                        'grupo' => $grupoMateria->grupo->nombre ?? 'Sin grupo',
-                        'color' => $this->getColorMateria($grupoMateria->sigla_materia ?? ''),
-                        'duracion' => $this->calcularDuracion($horario->hora_inicio, $horario->hora_fin)
-                    ];
-                }
+                $resultado[] = [
+                    'id' => $grupoHorario->id,
+                    'dia' => $this->getDiaNumero($grupoHorario->horario->dia ?? 'LUN'),
+                    'hora_inicio' => $grupoHorario->horario->hora_inicio ?? 'Sin hora',
+                    'hora_fin' => $grupoHorario->horario->hora_fin ?? 'Sin hora',
+                    'materia' => $grupoMateria->materia->nombre ?? 'Sin materia',
+                    'sigla_materia' => $grupoMateria->materia->sigla ?? 'Sin sigla',
+                    'docente' => $docenteNombre,
+                    'codigo_docente' => $codigoDocente,
+                    'aula' => $grupoHorario->aula->nombre ?? 'Sin aula',
+                    'grupo' => $grupoMateria->grupo->nombre ?? 'Sin grupo',
+                    'grupo_codigo' => $grupoCodigo,
+                    'color' => $this->getColorMateria($grupoMateria->sigla_materia ?? ''),
+                    'duracion' => $this->calcularDuracion(
+                        $grupoHorario->horario->hora_inicio ?? '00:00:00', 
+                        $grupoHorario->horario->hora_fin ?? '00:00:00'
+                    )
+                ];
             }
         }
         
         return $resultado;
+    }
+
+    /**
+     * Obtener número del día
+     */
+    private function getDiaNumero($diaDB)
+    {
+        $diasDB = [
+            'LUN' => 0,
+            'MAR' => 1, 
+            'MIE' => 2,
+            'JUE' => 3,
+            'VIE' => 4,
+            'SAB' => 5
+        ];
+        
+        return $diasDB[$diaDB] ?? 0;
     }
 
     /**
@@ -342,7 +402,6 @@ class VisualizacionController extends Controller
             '#1abc9c', '#34495e', '#d35400', '#c0392b', '#8e44ad'
         ];
         
-        // Usar el hash de la sigla para obtener un color consistente
         $hash = crc32($siglaMateria) % count($colores);
         return $colores[$hash];
     }
@@ -352,10 +411,13 @@ class VisualizacionController extends Controller
      */
     private function calcularDuracion($horaInicio, $horaFin)
     {
-        $inicio = Carbon::parse($horaInicio);
-        $fin = Carbon::parse($horaFin);
-        
-        return $fin->diffInHours($inicio);
+        try {
+            $inicio = Carbon::parse($horaInicio);
+            $fin = Carbon::parse($horaFin);
+            return $fin->diffInHours($inicio);
+        } catch (\Exception $e) {
+            return 1;
+        }
     }
 
     /**
@@ -367,7 +429,6 @@ class VisualizacionController extends Controller
             abort(403, 'No tienes permisos para ver horarios.');
         }
 
-        // Validar que el ID sea numérico
         if (!is_numeric($id)) {
             abort(404, 'Horario no encontrado.');
         }

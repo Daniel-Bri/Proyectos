@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Coordinador\HorarioController;
+use App\Http\Controllers\GestionDeHorarios\HorariosController;
 
 Route::prefix('coordinador')
     ->middleware(['auth', 'role:coordinador'])
@@ -11,5 +11,10 @@ Route::prefix('coordinador')
             return view('coordinador.dashboard');
         })->name('dashboard');
 
-        Route::resource('/horarios', HorarioController::class);
+        // Rutas específicas DEBEN IR ANTES del resource
+        Route::get('/horarios/asignar', [HorariosController::class, 'asignar'])->name('horarios.asignar');
+        Route::post('/horarios/asignar', [HorariosController::class, 'storeAsignacion'])->name('horarios.store-asignacion');
+        
+        // Resource DEBE IR DESPUÉS de las rutas específicas
+        Route::resource('/horarios', HorariosController::class);
     });
