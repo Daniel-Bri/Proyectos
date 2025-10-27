@@ -25,7 +25,7 @@
 <div class="max-w-4xl mx-auto mt-6">
     <div class="bg-white shadow-xl rounded-2xl border border-deep-teal-200 overflow-hidden">
         <div class="p-4 sm:p-6 bg-gradient-to-br from-gray-25 to-deep-teal-25">
-            <form action="{{ route('docentes.store') }}" method="POST">
+            <form action="{{ route('docentes.store') }}" method="POST" novalidate>
                 @csrf
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Información Personal -->
@@ -142,6 +142,21 @@
                                 @enderror
                             </div>
 
+                         <div>
+                            <label for="fecha_final" class="block text-sm font-bold text-green-700 mb-2">
+                                Fecha Final *
+                            </label>
+                            <input type="date" 
+                                id="fecha_final" 
+                                name="fecha_final" 
+                                value="{{ old('fecha_final') }}"
+                                class="w-full px-4 py-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-sm"
+                                required>
+                            @error('fecha_final')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                             <div>
                                 <label class="block text-sm font-bold text-green-700 mb-2">
                                     Carreras
@@ -182,6 +197,42 @@
                         Registrar Docente
                     </button>
                 </div>
+                <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        console.log('🔴 FORM SUBMIT EVENT FIRED');
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        
+        // Mostrar todos los datos del formulario
+        const formData = new FormData(form);
+        console.log('Form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key + ': ' + value);
+        }
+        
+        // Verificar validación HTML5
+        if (!form.checkValidity()) {
+            console.log('❌ HTML5 validation failed');
+            // Forzar el envío de todos modos
+            // e.preventDefault();
+            // form.submit();
+        } else {
+            console.log('✅ HTML5 validation passed');
+        }
+    });
+
+    // También agregar al botón
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+            console.log('🔴 SUBMIT BUTTON CLICKED');
+        });
+    }
+});
+</script>
             </form>
         </div>
     </div>

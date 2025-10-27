@@ -64,73 +64,72 @@ class DocenteController extends Controller
         return view('admin.docentes.create', compact('carreras'));
     }
 
-    public function store(Request $request)
-    {
-        // Verificar autenticación
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
+public function store(Request $request)
+{
+    // Verificar autenticación
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
 
-        $request->validate([
-            'codigo' => 'required|string|max:20|unique:docente',
-            'nombre' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'telefono' => 'required|string|max:15',
-            'sueldo' => 'required|numeric|min:0',
-            'fecha_contrato' => 'required|date',
-            'fecha_final' => 'required|date|after:fecha_contrato',
-            'carreras' => 'nullable|array',
-            'carreras.*' => 'exists:carrera,id'
+    $request->validate([
+        'codigo' => 'required|string|max:20|unique:docente',
+        'nombre' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'telefono' => 'required|string|max:15',
+        'sueldo' => 'required|numeric|min:0',
+        'fecha_contrato' => 'required|date',
+        'fecha_final' => 'required|date|after:fecha_contrato',
+        'carreras' => 'nullable|array',
+        'carreras.*' => 'exists:carrera,id'
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        // Crear usuario
+        $user = User::create([
+            'name' => $request->nombre,
+            'email' => $request->email,
+            'password' => Hash::make('password123'),
+            'password_set' => false
         ]);
 
-        try {
-            DB::beginTransaction();
+        // Crear docente
+        $docente = Docente::create([
+            'codigo' => $request->codigo,
+            'telefono' => $request->telefono,
+            'sueldo' => $request->sueldo,
+            'fecha_contrato' => $request->fecha_contrato,
+            'fecha_final' => $request->fecha_final,
+            'id_users' => $user->id
+        ]);
 
-            // Crear usuario
-            $user = User::create([
-                'name' => $request->nombre,
-                'email' => $request->email,
-                'password' => Hash::make('password123'),
-                'password_set' => false
-            ]);
-
-            // Crear docente
-            $docente = Docente::create([
-                'codigo' => $request->codigo,
-                'telefono' => $request->telefono,
-                'sueldo' => $request->sueldo,
-                'fecha_contrato' => $request->fecha_contrato,
-                'fecha_final' => $request->fecha_final,
-                'id_users' => $user->id
-            ]);
-
-            // Asignar carreras (solo las permitidas)
-            if ($request->has('carreras')) {
-                // Filtrar solo las carreras permitidas
-                $carrerasPermitidas = Carrera::whereIn('nombre', [
-                    'Ingeniería en Sistemas',
-                    'Ingeniería Informática',
-                    'Ingeniería en Redes y Telecomunicaciones'
-                ])->whereIn('id', $request->carreras)->pluck('id')->toArray();
-                
-                $docente->carreras()->sync($carrerasPermitidas);
-            }
-
-            // Asignar rol de docente
-            $user->assignRole('docente');
-
-            DB::commit();
-
-            return redirect()->route('docentes.index')
-                ->with('success', 'Docente registrado exitosamente.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Error al registrar el docente: ' . $e->getMessage())
-                ->withInput();
+        // Asignar carreras (solo las permitidas)
+        if ($request->has('carreras')) {
+            $carrerasPermitidas = Carrera::whereIn('nombre', [
+                'Ingeniería en Sistemas',
+                'Ingeniería Informática',
+                'Ingeniería en Redes y Telecomunicaciones'
+            ])->whereIn('id', $request->carreras)->pluck('id')->toArray();
+            
+            $docente->carreras()->sync($carrerasPermitidas);
         }
+
+        // Asignar rol de docente
+        $user->assignRole('docente');
+
+        DB::commit();
+
+        return redirect()->route('docentes.index')
+            ->with('success', 'Docente registrado exitosamente.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()
+            ->with('error', 'Error al registrar el docente: ' . $e->getMessage())
+            ->withInput();
     }
+}
 
     public function show($codigo)
     {
@@ -564,4 +563,25 @@ private function convertirDiaCompleto($diaTresLetras)
             'Ingeniería en Redes y Telecomunicaciones'
         ])->get();
     }
+    // Dashboard de gestión docente
+public function dashboard()
+{
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    // Estadísticas
+    $totalDocentes = Docente::count();
+    $docentesConCarga = Docente::whereHas('asistencias')->count();
+    $docentesSinCarga = $totalDocentes - $docentesConCarga;
+    $docentesActivos = Docente::where('fecha_final', '>=', now())->count();
+
+    return view('admin.docentes.dashboard', compact(
+        'totalDocentes',
+        'docentesConCarga', 
+        'docentesSinCarga',
+        'docentesActivos'
+    ));
+}
+
 }

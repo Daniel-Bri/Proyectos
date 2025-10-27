@@ -165,10 +165,28 @@
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-chalkboard-teacher mr-2 w-4 h-4"></i>
-                            Docentes
-                        </a>
+                        <!-- Submenú Docentes -->
+                        <div class="submenu-item">
+                            <button class="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate docentes-toggle">
+                                <div class="flex items-center">
+                                    <i class="fas fa-chalkboard-teacher mr-2 w-4 h-4"></i>
+                                    Docentes
+                                </div>
+                                <i class="fas fa-chevron-right text-xs transition-transform"></i>
+                            </button>
+                            <div class="sub-submenu ml-4">
+                                <a href="{{ route('docentes.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                    <i class="fas fa-list mr-2 w-4 h-4"></i>
+                                    Lista de Docentes
+                                </a>
+                                <a href="{{ route('docentes.create') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                    <i class="fas fa-user-plus mr-2 w-4 h-4"></i>
+                                    Registrar Docente
+                                </a>
+                                <!-- Nota: La carga horaria se accede desde la lista de docentes individualmente -->
+                            </div>
+                        </div>
+                        
                         <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
                             <i class="fas fa-book mr-2 w-4 h-4"></i>
                             Materias
@@ -376,6 +394,34 @@
                 }
             });
         });
+        // Toggle submenús de docentes
+document.querySelectorAll('.docentes-toggle').forEach(toggle => {
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const submenu = this.nextElementSibling;
+        const icon = this.querySelector('.fa-chevron-right');
+        
+        submenu.classList.toggle('open');
+        icon.classList.toggle('rotate-90');
+    });
+});
+
+// Cerrar submenús al hacer clic fuera
+document.addEventListener('click', function() {
+    document.querySelectorAll('.sub-submenu').forEach(submenu => {
+        submenu.classList.remove('open');
+    });
+    document.querySelectorAll('.docentes-toggle .fa-chevron-right').forEach(icon => {
+        icon.classList.remove('rotate-90');
+    });
+});
+
+// Prevenir que los clics en los submenús cierren el menú principal
+document.querySelectorAll('.submenu, .sub-submenu').forEach(menu => {
+    menu.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+});
     </script>
 </body>
 </html>

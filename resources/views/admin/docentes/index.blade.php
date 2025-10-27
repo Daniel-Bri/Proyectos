@@ -96,7 +96,7 @@
                                 @endif
                             @else
                                 <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs rounded-full border border-orange-200">
-                                    Sin carreras😊
+                                    Sin carreras
                                 </span>
                             @endif
                         </div>
@@ -105,47 +105,40 @@
                     <div class="flex justify-between items-center pt-4 border-t border-deep-teal-100">
                         <span class="text-xs text-deep-teal-500 font-medium">
                             <i class="far fa-calendar mr-1"></i>
-                          
+                            {{ $docente->created_at->format('d/m/Y') }}
                         </span>
-                            <div class="flex gap-2">
-                                <a href="{{ route('docentes.show', $docente->codigo) }}" 
-                                class="inline-flex items-center px-3 py-2 bg-[#3CA6A6] hover:bg-[#026773] text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                                    <i class="fas fa-eye mr-1"></i>
-                                </a>
-                                
-                                <!-- BOTÓN CARGA HORARIA MOBILE -->
-                                <a href="{{ route('admin.docentes.carga-horaria', $docente->codigo) }}" 
-                                class="inline-flex items-center px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                                    <i class="fas fa-clock mr-1"></i>
-                                </a>
-                                
-                                @can('admin')
-                                <a href="{{ route('docentes.edit', $docente->codigo) }}" 
-                                class="inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                                    <i class="fas fa-edit mr-1"></i>
-                                </a>
-                                <form action="{{ route('docentes.destroy', $docente->codigo) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" 
-                                            onclick="return confirm('¿Estás seguro de eliminar este docente?')"
-                                            class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                                        <i class="fas fa-trash mr-1"></i>
-                                    </button>
-                                </form>
-                                @endcan
-                            </div>
+                        <div class="flex gap-2">
+                            <a href="{{ route('docentes.show', $docente->codigo) }}" 
+                               class="inline-flex items-center px-3 py-2 bg-[#3CA6A6] hover:bg-[#026773] text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                               title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            
+                            <!-- BOTÓN CARGA HORARIA MOBILE -->
+                            <a href="{{ route('admin.docentes.carga-horaria', $docente->codigo) }}" 
+                               class="inline-flex items-center px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                               title="Carga horaria">
+                                <i class="fas fa-clock"></i>
+                            </a>
+                            
+                            <!-- BOTÓN EDITAR MOBILE -->
+                            @can('admin')
+                            <a href="{{ route('docentes.edit', $docente->codigo) }}" 
+                               class="inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                               title="Editar docente">
+                                <i class="fas fa-edit"></i>
                             </a>
                             <form action="{{ route('docentes.destroy', $docente->codigo) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" 
                                         onclick="return confirm('¿Estás seguro de eliminar este docente?')"
-                                        class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                                    <i class="fas fa-trash mr-1"></i>
+                                        class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                        title="Eliminar docente">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </form>
-                          
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -208,35 +201,51 @@
                                         @endif
                                     @else
                                         <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs rounded-full border border-orange-200">
-                                            Sin carreras😊
+                                            Sin carreras
                                         </span>
                                     @endif
                                 </div>
                             </td>
                             <td class="px-6 py-5 whitespace-nowrap text-sm font-medium">
                                 <div class="flex gap-2">
+                                    <!-- Botón Ver -->
                                     <a href="{{ route('docentes.show', $docente->codigo) }}" 
-                                       class="inline-flex items-center px-3 py-2 bg-[#3CA6A6] hover:bg-[#026773] text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                                       class="inline-flex items-center px-3 py-2 bg-[#3CA6A6] hover:bg-[#026773] text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                       title="Ver detalles">
                                         <i class="fas fa-eye mr-1"></i>
                                         Ver
                                     </a>
-                                    @can('admin')
+                                    
+                                    <!-- Botón Carga Horaria -->
+                                    <a href="{{ route('admin.docentes.carga-horaria', $docente->codigo) }}" 
+                                       class="inline-flex items-center px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                       title="Carga horaria">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Horario
+                                    </a>
+                                    
+                                    <!-- Botón Editar (Solo para admin) -->
+                                    @if(auth()->user()->hasRole('admin'))
                                     <a href="{{ route('docentes.edit', $docente->codigo) }}" 
-                                       class="inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                                       class="inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                       title="Editar docente">
                                         <i class="fas fa-edit mr-1"></i>
                                         Editar
                                     </a>
+                                    
+                                    <!-- Botón Eliminar -->
                                     <form action="{{ route('docentes.destroy', $docente->codigo) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
                                                 onclick="return confirm('¿Estás seguro de eliminar este docente?')"
-                                                class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                                                class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                                                title="Eliminar docente">
                                             <i class="fas fa-trash mr-1"></i>
                                             Eliminar
                                         </button>
                                     </form>
-                                    @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>
