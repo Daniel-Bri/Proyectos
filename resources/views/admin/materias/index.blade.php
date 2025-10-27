@@ -22,16 +22,44 @@
                     <i class="fas fa-plus mr-2"></i>
                     Nueva Materia
                 </a>
-                <button onclick="exportarMaterias()"
-                        class="inline-flex items-center px-4 py-2 bg-[#024959] hover:bg-[#012E40] border border-transparent rounded-xl font-semibold text-xs text-[#F2E3D5] uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    <i class="fas fa-file-export mr-2"></i>
-                    Exportar
-                </button>
+                <a href="{{ route('admin.materias.export') }}" 
+                   id="exportBtn"
+                   class="inline-flex items-center px-4 py-2 bg-[#024959] hover:bg-[#012E40] border border-transparent rounded-xl font-semibold text-xs text-[#F2E3D5] uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    <i class="fas fa-file-excel mr-2"></i>
+                    Exportar Excel
+                </a>
             </div>
         </div>
     </div>
 
     <div class="p-4 sm:p-6 bg-gradient-to-br from-gray-25 to-deep-teal-25">
+        <!-- Alertas -->
+        @if(session('warning'))
+            <div class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white mr-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <p class="text-amber-800 font-medium">{{ session('warning') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="mb-6 bg-rose-50 border border-rose-200 rounded-2xl p-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center text-white mr-3">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div>
+                        <p class="text-rose-800 font-medium">{{ session('error') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if($materias->count() > 0)
             <!-- Mobile Cards -->
             <div class="block sm:hidden space-y-4">
@@ -54,14 +82,10 @@
                         </span>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                        <div>
+                    <div class="text-sm mb-4">
+                        <div class="mb-3">
                             <p class="text-deep-teal-600 text-xs font-medium">Categoría</p>
                             <p class="font-bold text-deep-teal-800">{{ $materia->categoria->nombre ?? 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-deep-teal-600 text-xs font-medium">Carrera</p>
-                            <p class="font-bold text-deep-teal-800">{{ $materia->carrera->nombre ?? 'N/A' }}</p>
                         </div>
                     </div>
 
@@ -118,7 +142,6 @@
                             <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Materia</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Semestre</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Categoría</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Carrera</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Grupos</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Estado</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-[#F2E3D5] uppercase tracking-wider">Acciones</th>
@@ -149,9 +172,6 @@
                             </td>
                             <td class="px-6 py-5 whitespace-nowrap text-sm font-bold text-deep-teal-800">
                                 {{ $materia->categoria->nombre ?? 'N/A' }}
-                            </td>
-                            <td class="px-6 py-5 whitespace-nowrap text-sm font-bold text-deep-teal-800">
-                                {{ $materia->carrera->nombre ?? 'N/A' }}
                             </td>
                             <td class="px-6 py-5 whitespace-nowrap text-center">
                                 <span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-lg 
@@ -200,14 +220,19 @@
                 </table>
             </div>
 
-            <!-- Paginación (COMENTADA TEMPORALMENTE) -->
-            {{--
-            <div class="mt-8 flex justify-center">
-                <div class="bg-white px-6 py-4 rounded-2xl border border-deep-teal-100 shadow-lg">
-                    {{ $materias->links() }}
+            <!-- Información de exportación -->
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div>
+                        <p class="text-blue-800 font-medium">Exportación disponible</p>
+                        <p class="text-blue-600 text-sm">Puede exportar el listado completo de materias haciendo clic en "Exportar Excel"</p>
+                    </div>
                 </div>
             </div>
-            --}}
+
         @else
             <!-- Empty State -->
             <div class="text-center py-16">
@@ -230,10 +255,29 @@
 
 @push('scripts')
 <script>
-function exportarMaterias() {
-    // Implementar lógica de exportación
-    alert('Funcionalidad de exportación en desarrollo');
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const exportBtn = document.getElementById('exportBtn');
+    
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function(e) {
+            // Mostrar mensaje de confirmación
+            if (!confirm('¿Está seguro de que desea exportar el listado de materias a Excel?')) {
+                e.preventDefault();
+            } else {
+                // Mostrar mensaje de carga
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exportando...';
+                exportBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // Restaurar después de 3 segundos (por si hay error)
+                setTimeout(() => {
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }, 3000);
+            }
+        });
+    }
+});
 </script>
 @endpush
 @endsection

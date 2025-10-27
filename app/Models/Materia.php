@@ -18,19 +18,13 @@ class Materia extends Model
         'sigla',
         'nombre',
         'semestre',
-        'id_categoria'
+        'id_categoria',
     ];
 
     // Relación con Categoria
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'id_categoria');
-    }
-
-    // Relación con Carrera
-    public function carrera()
-    {
-        return $this->belongsTo(Carrera::class, 'id_carrera');
     }
 
     // Relación con Docentes (N:M)

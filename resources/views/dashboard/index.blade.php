@@ -187,10 +187,27 @@
                             </div>
                         </div>
                         
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-book mr-2 w-4 h-4"></i>
-                            Materias
-                        </a>
+@auth
+@if(auth()->user()->hasRole('admin'))
+    <a href="{{ route('admin.materias.index') }}" 
+       class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+        <i class="fas fa-book mr-2 w-4 h-4"></i>
+        Materias
+    </a>
+@elseif(auth()->user()->hasRole('coordinador'))
+    <a href="{{ route('coordinador.materias.index') }}" 
+       class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+        <i class="fas fa-book mr-2 w-4 h-4"></i>
+        Materias
+    </a>
+@else
+    <a href="#" 
+       class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+        <i class="fas fa-book mr-2 w-4 h-4"></i>
+        Materias
+    </a>
+@endif
+@endauth
                         <a href="{{ route('admin.aulas.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
                             <i class="fas fa-door-open mr-2 w-4 h-4"></i>
                             Aulas

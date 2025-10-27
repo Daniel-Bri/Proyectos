@@ -76,10 +76,6 @@
                             <dt class="w-32 flex-shrink-0 text-sm font-medium text-emerald-700">Categoría</dt>
                             <dd class="text-sm text-gray-900 font-semibold">{{ $materia->categoria->nombre ?? 'N/A' }}</dd>
                         </div>
-                        <div class="flex items-start">
-                            <dt class="w-32 flex-shrink-0 text-sm font-medium text-emerald-700">Carrera</dt>
-                            <dd class="text-sm text-gray-900 font-semibold">{{ $materia->carrera->nombre ?? 'N/A' }}</dd>
-                        </div>
                     </dl>
                 </div>
 

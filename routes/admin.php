@@ -8,7 +8,7 @@ use App\Http\Controllers\DocenteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MateriaController;
 
-// Panel administrativo (solo usuarios con rol “admin” o permiso “ver-bitacora”)
+// Panel administrativo (solo usuarios con rol “admin”)
 Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])
     ->as('admin.')
@@ -23,7 +23,9 @@ Route::prefix('admin')
             Route::get('/{sigla}/edit', [MateriaController::class, 'edit'])->name('edit');
             Route::put('/{sigla}', [MateriaController::class, 'update'])->name('update');
             Route::delete('/{sigla}', [MateriaController::class, 'destroy'])->name('destroy');
-            
+            // Agregar esta ruta para exportación
+            Route::get('/export', [MateriaController::class, 'export'])->name('export');
+
             // Asignación de Grupos
             Route::get('/{sigla}/asignar-grupo', [MateriaController::class, 'asignarGrupo'])->name('asignar-grupo');
             Route::post('/{sigla}/asignar-grupo', [MateriaController::class, 'storeAsignarGrupo'])->name('store-asignar-grupo');
@@ -49,7 +51,7 @@ Route::prefix('admin')
         Route::put('/roles/{id}', [RolController::class, 'update'])->name('roles.update');
         Route::delete('/roles/{id}', [RolController::class, 'destroy'])->name('roles.destroy');
 
-        // RUTAS DE USUARIOS - MOVER AQUÍ (FUERA del grupo de docentes)
+        // Gestión de Usuarios
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -63,6 +65,8 @@ Route::prefix('admin')
         Route::post('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.update-password');
         Route::post('/users/{user}/verification', [UserController::class, 'updateVerification'])->name('users.update-verification');
         Route::post('/users/{user}/generate-token', [UserController::class, 'generateTemporalToken'])->name('users.generate-token');
+        
+        
         // Gestión de Aulas
         Route::resource('aulas', AulaController::class)->names('aulas');
     });

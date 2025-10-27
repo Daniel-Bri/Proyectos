@@ -1,4 +1,4 @@
-@extends('layouts.coordinador')
+@extends('layouts.app') {{-- ✅ CORREGIDO: Usar layout principal --}}
 
 @section('title', 'Detalles de Materia - Coordinador')
 
@@ -18,17 +18,18 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('materias.edit', $materia->sigla) }}" 
+                    {{-- ✅ RUTAS CORREGIDAS --}}
+                    <a href="{{ route('coordinador.materias.edit', $materia->sigla) }}" 
                        class="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                         <i class="fas fa-edit mr-2"></i>
                         Editar
                     </a>
-                    <a href="{{ route('materias.asignar-grupo', $materia->sigla) }}" 
+                    <a href="{{ route('coordinador.materias.asignar-grupo', $materia->sigla) }}" 
                        class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                         <i class="fas fa-users mr-2"></i>
                         Gestionar Grupos
                     </a>
-                    <a href="{{ route('materias.index') }}" 
+                    <a href="{{ route('coordinador.materias.index') }}" 
                        class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-xl font-semibold text-xs uppercase tracking-widest transition-all duration-200 backdrop-blur-sm">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Volver
@@ -90,9 +91,21 @@
                         Métricas Académicas
                     </h4>
                     <dl class="space-y-4">
+                        {{-- ✅ CORREGIDO: Contar docentes únicos de horarios --}}
+                        @php
+                            $docentesUnicos = [];
+                            foreach($materia->grupoMaterias as $grupoMateria) {
+                                foreach($grupoMateria->horarios as $horario) {
+                                    if ($horario->docente && !in_array($horario->docente->codigo, $docentesUnicos)) {
+                                        $docentesUnicos[] = $horario->docente->codigo;
+                                    }
+                                }
+                            }
+                            $totalDocentes = count($docentesUnicos);
+                        @endphp
                         <div class="flex items-center justify-between">
                             <dt class="text-sm font-medium text-purple-700">Docentes</dt>
-                            <dd class="text-lg font-bold text-purple-900">{{ $materia->docentes->count() }}</dd>
+                            <dd class="text-lg font-bold text-purple-900">{{ $totalDocentes }}</dd>
                         </div>
                         <div class="flex items-center justify-between">
                             <dt class="text-sm font-medium text-purple-700">Grupos</dt>
@@ -112,29 +125,59 @@
             <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-100 shadow-sm mb-8">
                 <h4 class="text-lg font-bold text-amber-800 mb-4 flex items-center">
                     <i class="fas fa-user-tie mr-2"></i>
-                    Equipo Docente Asignado
+                    Equipo Docente en Horarios
                 </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($materia->docentes as $docente)
-                        <div class="bg-white rounded-xl p-4 border border-amber-200 shadow-sm hover:shadow-md transition-all duration-200">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
-                                    {{ substr($docente->nombre, 0, 1) }}
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-bold text-amber-900">{{ $docente->nombre }}</p>
-                                    <p class="text-sm text-amber-700">{{ $docente->codigo }}</p>
-                                    <div class="flex items-center mt-2">
-                                        <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                            <i class="fas fa-circle text-xs mr-1"></i>
-                                            Activo
-                                        </span>
+                
+                @if($totalDocentes > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {{-- ✅ CORREGIDO: Mostrar docentes únicos de horarios --}}
+                        @php
+                            $docentesMostrados = [];
+                        @endphp
+                        @foreach($materia->grupoMaterias as $grupoMateria)
+                            @foreach($grupoMateria->horarios as $horario)
+                                @if($horario->docente && !in_array($horario->docente->codigo, $docentesMostrados))
+                                    @php
+                                        $docentesMostrados[] = $horario->docente->codigo;
+                                        $totalHorariosDocente = 0;
+                                        foreach($materia->grupoMaterias as $gm) {
+                                            $totalHorariosDocente += $gm->horarios->where('codigo_docente', $horario->docente->codigo)->count();
+                                        }
+                                    @endphp
+                                    <div class="bg-white rounded-xl p-4 border border-amber-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                        <div class="flex items-center">
+                                            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                                                {{ substr($horario->docente->nombre, 0, 1) }}
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="font-bold text-amber-900">{{ $horario->docente->nombre }}</p>
+                                                <p class="text-sm text-amber-700">{{ $horario->docente->codigo }}</p>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                                        <i class="fas fa-clock text-xs mr-1"></i>
+                                                        {{ $totalHorariosDocente }} horario(s)
+                                                    </span>
+                                                    <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                                        <i class="fas fa-circle text-xs mr-1"></i>
+                                                        Activo
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                @endif
+                            @endforeach
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user-clock text-amber-500 text-xl"></i>
                         </div>
-                    @endforeach
-                </div>
+                        <p class="text-amber-600 font-medium">No hay docentes asignados en horarios</p>
+                        <p class="text-amber-500 text-sm">Los docentes se asignan cuando se crean horarios para grupos</p>
+                    </div>
+                @endif
             </div>
 
             <!-- Programación Académica -->
@@ -225,7 +268,8 @@
                 </div>
                 <h4 class="text-xl font-bold text-gray-700 mb-2">Programación pendiente</h4>
                 <p class="text-gray-600 mb-4">Esta materia necesita grupos y horarios asignados.</p>
-                <a href="{{ route('materias.asignar-grupo', $materia->sigla) }}" 
+                {{-- ✅ RUTA CORREGIDA --}}
+                <a href="{{ route('coordinador.materias.asignar-grupo', $materia->sigla) }}" 
                    class="inline-flex items-center px-6 py-3 bg-[#3CA6A6] hover:bg-[#026773] text-white font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                     <i class="fas fa-calendar-plus mr-2"></i>
                     Programar Grupos
