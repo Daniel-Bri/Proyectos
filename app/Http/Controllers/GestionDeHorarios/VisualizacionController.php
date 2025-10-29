@@ -13,14 +13,36 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
+// AÑADE ESTA LÍNEA PARA IMPORTAR EL CONTROLADOR DE BITÁCORA
+use App\Http\Controllers\Administracion\BitacoraController;
+
 class VisualizacionController extends Controller
 {
     public function index(Request $request)
     {
         // Verificar permisos
         if (!auth()->user()->hasAnyRole(['admin', 'docente', 'coordinador'])) {
+            // REGISTRO EN BITÁCORA: Intento de acceso no autorizado
+            BitacoraController::registrar(
+                'Intento de acceso no autorizado',
+                'Visualización Horarios',
+                null,
+                auth()->id(),
+                $request,
+                'Usuario sin permisos intentó acceder a visualización de horarios'
+            );
             abort(403, 'No tienes permisos para ver horarios.');
         }
+
+        // REGISTRO EN BITÁCORA: Acceso a visualización de horarios
+        BitacoraController::registrar(
+            'Consulta de horarios',
+            'Visualización Horarios',
+            null,
+            auth()->id(),
+            $request,
+            'Acceso a la vista de visualización semanal de horarios'
+        );
 
         // Obtener parámetros de filtro
         $fechaInicio = $request->filled('fecha_inicio') 
@@ -40,6 +62,25 @@ class VisualizacionController extends Controller
             'grupo_id' => $grupoId,
             'fecha_inicio' => $fechaInicio
         ]);
+
+        // REGISTRO EN BITÁCORA: Filtros aplicados (solo si hay filtros)
+        if ($codigoDocente || $docenteId || $materiaId || $grupoId) {
+            $detallesFiltros = "Filtros aplicados: ";
+            $filtros = [];
+            if ($codigoDocente) $filtros[] = "Código docente: $codigoDocente";
+            if ($docenteId) $filtros[] = "ID docente: $docenteId";
+            if ($materiaId) $filtros[] = "Materia ID: $materiaId";
+            if ($grupoId) $filtros[] = "Grupo ID: $grupoId";
+            
+            BitacoraController::registrar(
+                'Aplicación de filtros',
+                'Visualización Horarios',
+                null,
+                auth()->id(),
+                $request,
+                $detallesFiltros . implode(', ', $filtros)
+            );
+        }
 
         // Obtener horarios con filtros aplicados
         $gruposHorarios = $this->obtenerHorariosConFiltros($codigoDocente, $docenteId, $materiaId, $grupoId);
@@ -93,8 +134,27 @@ class VisualizacionController extends Controller
     public function calendario(Request $request)
     {
         if (!auth()->user()->hasAnyRole(['admin', 'docente', 'coordinador'])) {
+            // REGISTRO EN BITÁCORA: Intento de acceso no autorizado
+            BitacoraController::registrar(
+                'Intento de acceso no autorizado',
+                'Calendario Horarios',
+                null,
+                auth()->id(),
+                $request,
+                'Usuario sin permisos intentó acceder a calendario de horarios'
+            );
             abort(403, 'No tienes permisos para ver horarios en calendario.');
         }
+
+        // REGISTRO EN BITÁCORA: Acceso a calendario
+        BitacoraController::registrar(
+            'Consulta de calendario',
+            'Calendario Horarios',
+            null,
+            auth()->id(),
+            $request,
+            'Acceso a la vista de calendario semanal de horarios'
+        );
 
         // Obtener parámetros de filtro
         $codigoDocente = $request->codigo_docente;
@@ -210,6 +270,7 @@ class VisualizacionController extends Controller
 
         return $resultados;
     }
+
     /**
      * Formatear horarios para la vista semanal - CORREGIDO
      */
@@ -296,8 +357,6 @@ class VisualizacionController extends Controller
         return $horariosFormateados;
     }
 
-    // ... (el resto de los métodos se mantienen igual: apiHorarios, formatearHorariosParaAPI, getDiaNumero, getColorMateria, calcularDuracion, show)
-
     /**
      * API endpoint para obtener horarios (para AJAX)
      */
@@ -311,6 +370,16 @@ class VisualizacionController extends Controller
                 'materia_id' => 'nullable|string',
                 'grupo_id' => 'nullable|string'
             ]);
+
+            // REGISTRO EN BITÁCORA: Consulta API
+            BitacoraController::registrar(
+                'Consulta API horarios',
+                'API Horarios',
+                null,
+                auth()->id(),
+                $request,
+                'Solicitud de horarios vía API con filtros'
+            );
 
             $fechaInicio = Carbon::parse($validated['fecha_inicio'])->startOfWeek();
 
@@ -329,6 +398,16 @@ class VisualizacionController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            // REGISTRO EN BITÁCORA: Error en API
+            BitacoraController::registrar(
+                'Error en API horarios',
+                'API Horarios',
+                null,
+                auth()->id(),
+                $request,
+                'Error al cargar horarios: ' . $e->getMessage()
+            );
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar los horarios: ' . $e->getMessage()
@@ -426,12 +505,31 @@ class VisualizacionController extends Controller
     public function show($id)
     {
         if (!auth()->user()->hasAnyRole(['admin', 'docente', 'estudiante'])) {
+            // REGISTRO EN BITÁCORA: Intento de acceso no autorizado
+            BitacoraController::registrar(
+                'Intento de acceso no autorizado',
+                'Detalle Horario',
+                $id,
+                auth()->id(),
+                request(),
+                'Usuario sin permisos intentó ver detalle de horario'
+            );
             abort(403, 'No tienes permisos para ver horarios.');
         }
 
         if (!is_numeric($id)) {
             abort(404, 'Horario no encontrado.');
         }
+
+        // REGISTRO EN BITÁCORA: Consulta de detalle
+        BitacoraController::registrar(
+            'Consulta detalle horario',
+            'Detalle Horario',
+            $id,
+            auth()->id(),
+            request(),
+            'Visualización de detalles del horario ID: ' . $id
+        );
 
         $horario = Horario::with([
             'grupoMateriaHorarios.aula',

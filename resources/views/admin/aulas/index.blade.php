@@ -72,7 +72,6 @@
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-[#F2E3D5] uppercase tracking-wider">NOMBRE</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-[#F2E3D5] uppercase tracking-wider">TIPO</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-[#F2E3D5] uppercase tracking-wider">CAPACIDAD</th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-[#F2E3D5] uppercase tracking-wider">UBICACIÓN</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-[#F2E3D5] uppercase tracking-wider">ESTADO</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-[#F2E3D5] uppercase tracking-wider">ACCIONES</th>
                             </tr>
@@ -115,9 +114,6 @@
                                         <span class="text-sm font-medium text-[#012E40]">{{ $aula->capacidad }}</span>
                                         <span class="text-xs text-[#024959] ml-1">estudiantes</span>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-[#012E40]">
-                                    {{ $aula->ubicacion ?? 'Sin ubicación' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 

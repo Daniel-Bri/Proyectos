@@ -10,10 +10,11 @@ use App\Models\Docente;
 use App\Models\Materia;
 use App\Models\Grupo;
 use App\Models\Aula;
-use App\Models\GestionAcademica; // Añadir este import
+use App\Models\GestionAcademica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Http\Controllers\Administracion\BitacoraController;
 
 class HorariosController extends Controller
 {
@@ -32,7 +33,7 @@ class HorariosController extends Controller
         $materiaId = $request->materia_id;
         $grupoId = $request->grupo_id;
 
-        // Consulta principal de horarios asignados - CON DEBUG
+        // Consulta principal de horarios asignados
         $query = GrupoMateriaHorario::with([
             'horario',
             'grupoMateria.materia',
@@ -43,19 +44,7 @@ class HorariosController extends Controller
         ->where('estado_aula', 'ocupado')
         ->orderBy('id', 'desc');
 
-        // Debug: ver qué datos estamos obteniendo
-        $debugHorarios = $query->get();
-        
-        // Log para verificar los datos
-        foreach ($debugHorarios as $horario) {
-            \Log::info('Horario ID: ' . $horario->id);
-            \Log::info('Docente: ' . ($horario->docente ? $horario->docente->codigo : 'NULL'));
-            \Log::info('Materia: ' . ($horario->grupoMateria && $horario->grupoMateria->materia ? $horario->grupoMateria->materia->nombre : 'NULL'));
-            \Log::info('Grupo: ' . ($horario->grupoMateria && $horario->grupoMateria->grupo ? $horario->grupoMateria->grupo->nombre : 'NULL'));
-            \Log::info('Aula: ' . ($horario->aula ? $horario->aula->nombre : 'NULL'));
-        }
-
-        // Aplicar filtros (mantener tu lógica original)
+        // Aplicar filtros
         if ($docenteId) {
             $query->where('id_docente', $docenteId);
         }
@@ -73,6 +62,17 @@ class HorariosController extends Controller
         }
 
         $horarios = $query->paginate(15);
+
+        // Registrar en bitácora
+        $filtros = $this->obtenerFiltrosBitacora($request);
+        BitacoraController::registrar(
+            'Consulta de horarios',
+            'Horario',
+            null,
+            auth()->id(),
+            $request,
+            "Consultó listado de horarios con filtros: " . $filtros
+        );
 
         // Obtener datos para filtros
         $docentes = Docente::with('user')->get()->map(function($docente) {
@@ -115,10 +115,20 @@ class HorariosController extends Controller
             ]);
         }
 
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'Acceso a creación de horario',
+            'Horario',
+            null,
+            auth()->id(),
+            request(),
+            'Accedió al formulario de creación de horario'
+        );
+
         // Obtener datos para el formulario
         $docentes = Docente::with('user')->get()->map(function($docente) {
             return [
-                'id' => $docente->codigo, // CORREGIDO: usar codigo como id
+                'id' => $docente->codigo,
                 'nombre' => $docente->user->name ?? 'Sin nombre',
                 'codigo' => $docente->codigo
             ];
@@ -126,7 +136,7 @@ class HorariosController extends Controller
 
         $materias = Materia::orderBy('nombre')->get();
         $grupos = Grupo::orderBy('nombre')->get();
-        $aulas = Aula::orderBy('nombre')->get(); // Quitar filtro de estado
+        $aulas = Aula::orderBy('nombre')->get();
 
         // Días de la semana
         $dias = [
@@ -163,6 +173,16 @@ class HorariosController extends Controller
             ]);
         }
 
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'Acceso a asignación de horarios',
+            'Horario',
+            null,
+            auth()->id(),
+            request(),
+            'Accedió al formulario de asignación de horarios'
+        );
+
         // Obtener horarios disponibles (sin asignar)
         $horariosDisponibles = Horario::whereDoesntHave('grupoMateriaHorarios', function($query) {
             $query->where('estado_aula', 'ocupado');
@@ -171,7 +191,7 @@ class HorariosController extends Controller
         // Obtener datos para el formulario
         $docentes = Docente::with('user')->get()->map(function($docente) {
             return [
-                'id' => $docente->codigo, // CORREGIDO: usar codigo como id
+                'id' => $docente->codigo,
                 'nombre' => $docente->user->name ?? 'Sin nombre',
                 'codigo' => $docente->codigo
             ];
@@ -179,7 +199,7 @@ class HorariosController extends Controller
 
         $materias = Materia::orderBy('nombre')->get();
         $grupos = Grupo::orderBy('nombre')->get();
-        $aulas = Aula::orderBy('nombre')->get(); // Quitar filtro de estado
+        $aulas = Aula::orderBy('nombre')->get();
 
         return view('horarios.asignar', compact(
             'horariosDisponibles',
@@ -205,11 +225,11 @@ class HorariosController extends Controller
             'dia' => 'required|string|in:LUN,MAR,MIE,JUE,VIE,SAB',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
-            'id_docente' => 'required|exists:docente,codigo', // CORREGIDO: existe en docente con codigo
+            'id_docente' => 'required|exists:docente,codigo',
             'sigla_materia' => 'required|exists:materia,sigla',
             'id_grupo' => 'required|exists:grupo,id',
             'id_aula' => 'required|exists:aula,id',
-            'id_gestion' => 'required|exists:gestion_academica,id' // AÑADIDO: gestión es requerida
+            'id_gestion' => 'required|exists:gestion_academica,id'
         ]);
 
         DB::beginTransaction();
@@ -278,16 +298,30 @@ class HorariosController extends Controller
                 ])->withInput();
             }
 
-            // Crear la asignación de horario - estado_aula siempre será 'ocupado'
-            GrupoMateriaHorario::create([
+            // Crear la asignación de horario
+            $grupoMateriaHorario = GrupoMateriaHorario::create([
                 'id_horario' => $horarioExistente->id,
                 'id_grupo_materia' => $grupoMateriaId,
                 'id_docente' => $validated['id_docente'],
                 'id_aula' => $validated['id_aula'],
-                'estado_aula' => 'ocupado' // SIEMPRE OCUPADO CUANDO SE CREA
+                'estado_aula' => 'ocupado'
             ]);
 
             DB::commit();
+
+            // Registrar en bitácora
+            $detalles = "Horario creado: {$validated['dia']} {$validated['hora_inicio']}-{$validated['hora_fin']}, ";
+            $detalles .= "Materia: {$validated['sigla_materia']}, ";
+            $detalles .= "Grupo: {$validated['id_grupo']}, ";
+            $detalles .= "Docente: {$validated['id_docente']}, ";
+            $detalles .= "Aula: {$validated['id_aula']}";
+
+            BitacoraController::registrarCreacion(
+                'Horario', 
+                $grupoMateriaHorario->id, 
+                auth()->id(), 
+                $detalles
+            );
 
             return redirect()->route('horarios.index')
                 ->with('success', 'Horario asignado correctamente.');
@@ -311,11 +345,11 @@ class HorariosController extends Controller
 
         $validated = $request->validate([
             'id_horario' => 'required|exists:horario,id',
-            'id_docente' => 'required|exists:docente,codigo', // CORREGIDO: existe en docente con codigo
+            'id_docente' => 'required|exists:docente,codigo',
             'sigla_materia' => 'required|exists:materia,sigla',
             'id_grupo' => 'required|exists:grupo,id',
             'id_aula' => 'required|exists:aula,id',
-            'id_gestion' => 'required|exists:gestion_academica,id' // AÑADIDO
+            'id_gestion' => 'required|exists:gestion_academica,id'
         ]);
 
         DB::beginTransaction();
@@ -372,15 +406,29 @@ class HorariosController extends Controller
             }
 
             // Crear la asignación de horario
-            GrupoMateriaHorario::create([
+            $grupoMateriaHorario = GrupoMateriaHorario::create([
                 'id_horario' => $validated['id_horario'],
                 'id_grupo_materia' => $grupoMateriaId,
                 'id_docente' => $validated['id_docente'],
                 'id_aula' => $validated['id_aula'],
-                'estado_aula' => 'ocupado' // SIEMPRE OCUPADO
+                'estado_aula' => 'ocupado'
             ]);
 
             DB::commit();
+
+            // Registrar en bitácora
+            $detalles = "Horario asignado: {$horario->dia} {$horario->hora_inicio}-{$horario->hora_fin}, ";
+            $detalles .= "Materia: {$validated['sigla_materia']}, ";
+            $detalles .= "Grupo: {$validated['id_grupo']}, ";
+            $detalles .= "Docente: {$validated['id_docente']}, ";
+            $detalles .= "Aula: {$validated['id_aula']}";
+
+            BitacoraController::registrarCreacion(
+                'Horario', 
+                $grupoMateriaHorario->id, 
+                auth()->id(), 
+                $detalles
+            );
 
             return redirect()->route('horarios.index')
                 ->with('success', 'Horario asignado correctamente.');
@@ -414,6 +462,16 @@ class HorariosController extends Controller
             'aula'
         ])->findOrFail($id);
 
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'Consulta de horario',
+            'Horario',
+            $horarioAsignado->id,
+            auth()->id(),
+            request(),
+            "Consultó detalles del horario: {$horarioAsignado->grupoMateria->materia->nombre} - {$horarioAsignado->horario->dia}"
+        );
+
         return view('horarios.show', compact('horarioAsignado'));
     }
 
@@ -435,13 +493,23 @@ class HorariosController extends Controller
             'aula'
         ])->findOrFail($id);
 
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'Acceso a edición de horario',
+            'Horario',
+            $horarioAsignado->id,
+            auth()->id(),
+            request(),
+            "Accedió a editar horario: {$horarioAsignado->grupoMateria->materia->nombre} - {$horarioAsignado->horario->dia}"
+        );
+
         // Obtener la gestión académica activa
         $gestionActiva = GestionAcademica::where('estado', 'curso')->first();
 
         // Obtener datos para el formulario
         $docentes = Docente::with('user')->get()->map(function($docente) {
             return [
-                'id' => $docente->codigo, // CORREGIDO
+                'id' => $docente->codigo,
                 'nombre' => $docente->user->name ?? 'Sin nombre',
                 'codigo' => $docente->codigo
             ];
@@ -487,18 +555,30 @@ class HorariosController extends Controller
             'dia' => 'required|string|in:LUN,MAR,MIE,JUE,VIE,SAB',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
-            'id_docente' => 'required|exists:docente,codigo', // CORREGIDO
+            'id_docente' => 'required|exists:docente,codigo',
             'sigla_materia' => 'required|exists:materia,sigla',
             'id_grupo' => 'required|exists:grupo,id',
             'id_aula' => 'required|exists:aula,id',
             'id_gestion' => 'required|exists:gestion_academica,id',
-            'estado_aula' => 'required|string|in:ocupado,disponible' // MANTENER para edición
+            'estado_aula' => 'required|string|in:ocupado,disponible'
         ]);
 
         DB::beginTransaction();
 
         try {
             $horarioAsignado = GrupoMateriaHorario::findOrFail($id);
+
+            // Guardar datos antiguos para comparación
+            $datosAntiguos = [
+                'dia' => $horarioAsignado->horario->dia,
+                'hora_inicio' => $horarioAsignado->horario->hora_inicio,
+                'hora_fin' => $horarioAsignado->horario->hora_fin,
+                'docente' => $horarioAsignado->id_docente,
+                'materia' => $horarioAsignado->grupoMateria->sigla_materia,
+                'grupo' => $horarioAsignado->grupoMateria->id_grupo,
+                'aula' => $horarioAsignado->id_aula,
+                'estado' => $horarioAsignado->estado_aula
+            ];
 
             // Verificar si el horario ya existe
             $horarioExistente = Horario::where('dia', $validated['dia'])
@@ -576,6 +656,26 @@ class HorariosController extends Controller
 
             DB::commit();
 
+            // Obtener cambios realizados para la bitácora
+            $cambios = $this->obtenerCambiosBitacora($datosAntiguos, [
+                'dia' => $validated['dia'],
+                'hora_inicio' => $validated['hora_inicio'],
+                'hora_fin' => $validated['hora_fin'],
+                'docente' => $validated['id_docente'],
+                'materia' => $validated['sigla_materia'],
+                'grupo' => $validated['id_grupo'],
+                'aula' => $validated['id_aula'],
+                'estado' => $validated['estado_aula']
+            ]);
+
+            // Registrar en bitácora
+            BitacoraController::registrarActualizacion(
+                'Horario', 
+                $horarioAsignado->id, 
+                auth()->id(), 
+                "Horario actualizado. Cambios: " . ($cambios ?: 'Sin cambios detectados')
+            );
+
             return redirect()->route('horarios.index')
                 ->with('success', 'Horario actualizado correctamente.');
 
@@ -602,10 +702,25 @@ class HorariosController extends Controller
         DB::beginTransaction();
 
         try {
-            $horarioAsignado = GrupoMateriaHorario::findOrFail($id);
+            $horarioAsignado = GrupoMateriaHorario::with(['horario', 'grupoMateria.materia', 'docente', 'aula'])->findOrFail($id);
+
+            // Guardar información para la bitácora antes de eliminar
+            $infoHorario = "Horario: {$horarioAsignado->horario->dia} {$horarioAsignado->horario->hora_inicio}-{$horarioAsignado->horario->hora_fin}, ";
+            $infoHorario .= "Materia: {$horarioAsignado->grupoMateria->materia->nombre}, ";
+            $infoHorario .= "Docente: {$horarioAsignado->id_docente}, ";
+            $infoHorario .= "Aula: {$horarioAsignado->aula->nombre}";
+
             $horarioAsignado->delete();
 
             DB::commit();
+
+            // Registrar en bitácora
+            BitacoraController::registrarEliminacion(
+                'Horario', 
+                $id, 
+                auth()->id(), 
+                "Horario eliminado: {$infoHorario}"
+            );
 
             return redirect()->route('horarios.index')
                 ->with('success', 'Horario eliminado correctamente.');
@@ -692,5 +807,54 @@ class HorariosController extends Controller
         }
 
         return $query->exists();
+    }
+
+    /**
+     * Obtener los filtros aplicados para la bitácora
+     */
+    private function obtenerFiltrosBitacora(Request $request)
+    {
+        $filtros = [];
+        
+        if ($request->filled('docente_id')) {
+            $filtros[] = "docente: {$request->docente_id}";
+        }
+        
+        if ($request->filled('materia_id')) {
+            $filtros[] = "materia: {$request->materia_id}";
+        }
+        
+        if ($request->filled('grupo_id')) {
+            $filtros[] = "grupo: {$request->grupo_id}";
+        }
+
+        return $filtros ? implode(', ', $filtros) : 'Sin filtros';
+    }
+
+    /**
+     * Obtener los cambios realizados en una actualización
+     */
+    private function obtenerCambiosBitacora(array $datosAntiguos, array $datosNuevos)
+    {
+        $cambios = [];
+        $camposRelevantes = [
+            'dia' => 'Día',
+            'hora_inicio' => 'Hora inicio',
+            'hora_fin' => 'Hora fin',
+            'docente' => 'Docente',
+            'materia' => 'Materia',
+            'grupo' => 'Grupo',
+            'aula' => 'Aula',
+            'estado' => 'Estado aula'
+        ];
+
+        foreach ($camposRelevantes as $campo => $label) {
+            if (isset($datosAntiguos[$campo]) && isset($datosNuevos[$campo]) && 
+                $datosAntiguos[$campo] != $datosNuevos[$campo]) {
+                $cambios[] = "{$label}: '{$datosAntiguos[$campo]}' → '{$datosNuevos[$campo]}'";
+            }
+        }
+
+        return implode('; ', $cambios);
     }
 }

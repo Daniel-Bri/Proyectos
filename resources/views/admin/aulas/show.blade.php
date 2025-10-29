@@ -44,10 +44,6 @@
                     </h4>
                     <dl class="space-y-4">
                         <div>
-                            <dt class="text-sm font-medium text-[#012E40]">Código</dt>
-                            <dd class="mt-1 text-xl font-bold text-[#012E40]">{{ $aula->codigo }}</dd>
-                        </div>
-                        <div>
                             <dt class="text-sm font-medium text-[#012E40]">Nombre</dt>
                             <dd class="mt-1 text-lg text-[#024959]">{{ $aula->nombre }}</dd>
                         </div>
@@ -98,28 +94,7 @@
                 </div>
             </div>
 
-            <!-- Ubicación y Equipamiento -->
-            <div class="mt-6 bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">
-                <h4 class="text-lg font-semibold text-[#012E40] mb-4 flex items-center">
-                    <i class="fas fa-map-marker-alt mr-2 text-[#026773]"></i>
-                    Ubicación y Equipamiento
-                </h4>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h5 class="text-sm font-semibold text-[#012E40] mb-2">Ubicación</h5>
-                        <p class="text-[#024959] bg-white p-3 rounded-lg border border-[#3CA6A6]">
-                            {{ $aula->ubicacion ?? 'No especificada' }}
-                        </p>
-                    </div>
-                    <div>
-                        <h5 class="text-sm font-semibold text-[#012E40] mb-2">Equipamiento</h5>
-                        <p class="text-[#024959] bg-white p-3 rounded-lg border border-[#3CA6A6] min-h-[80px]">
-                            {{ $aula->equipamiento ?? 'No especificado' }}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- Información Adicional -->
             <div class="mt-6 bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">

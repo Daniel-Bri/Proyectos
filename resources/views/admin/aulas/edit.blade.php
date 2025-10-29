@@ -108,34 +108,6 @@
                                 @enderror
                             </div>
 
-                            <div class="md:col-span-2">
-                                <label for="ubicacion" class="block text-sm font-medium text-[#012E40] mb-2">
-                                    Ubicación <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" name="ubicacion" id="ubicacion" value="{{ old('ubicacion', $aula->ubicacion) }}" 
-                                       class="w-full border border-[#3CA6A6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#024959] focus:border-transparent transition-all duration-200 bg-white @error('ubicacion') border-red-500 @enderror"
-                                       placeholder="Ej: Edificio A, Segundo piso, Ala norte" required>
-                                @error('ubicacion')
-                                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                                        <i class="fas fa-exclamation-triangle mr-2"></i>{{ $message }}
-                                    </p>
-                                @enderror
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label for="equipamiento" class="block text-sm font-medium text-[#012E40] mb-2">
-                                    Equipamiento
-                                </label>
-                                <textarea name="equipamiento" id="equipamiento" rows="3"
-                                          class="w-full border border-[#3CA6A6] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#024959] focus:border-transparent transition-all duration-200 bg-white @error('equipamiento') border-red-500 @enderror"
-                                          placeholder="Descripción del equipamiento disponible...">{{ old('equipamiento', $aula->equipamiento) }}</textarea>
-                                @error('equipamiento')
-                                    <p class="mt-2 text-sm text-red-600 flex items-center">
-                                        <i class="fas fa-exclamation-triangle mr-2"></i>{{ $message }}
-                                    </p>
-                                @enderror
-                            </div>
-
                             <div>
                                 <label for="estado" class="block text-sm font-medium text-[#012E40] mb-2">
                                     Estado <span class="text-red-500">*</span>
