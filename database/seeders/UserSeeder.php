@@ -38,11 +38,21 @@ class UserSeeder extends Seeder
             ]
         );
 
+        $coordinador = User::firstOrCreate(
+            ['email' => 'coordinador@gmail.com'],
+            [
+                'name' => 'Coordinador', 
+                'password' => Hash::make('12345678'),
+                'email_verified_at' => now(),
+            ]
+        );
+
         // Asignar roles si usas Spatie Permission
         if (class_exists(\Spatie\Permission\Models\Role::class)) {
             $admin->assignRole('admin');
             $docente1->assignRole('docente');
             $docente2->assignRole('docente');
+            $coordinador->assignRole('coordinador');
         }
     }
 }

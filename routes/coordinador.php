@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MateriaController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\GestionAcademica\MateriaController;
+use App\Http\Controllers\Administracion\UserController;
 
 Route::prefix('coordinador')
     ->middleware(['auth', 'role:coordinador'])
@@ -46,4 +46,14 @@ Route::prefix('coordinador')
             Route::get('/get-horarios', [MateriaController::class, 'getHorarios'])->name('get-horarios');
             Route::get('/get-aulas', [MateriaController::class, 'getAulas'])->name('get-aulas');
         });
+
+        // =========================================================================
+        // GESTIÓN DE HORARIOS - COORDINADOR (TUS RUTAS NUEVAS)
+        // =========================================================================
+        // Rutas específicas DEBEN IR ANTES del resource
+        Route::get('/horarios/asignar', [HorariosController::class, 'asignar'])->name('horarios.asignar');
+        Route::post('/horarios/asignar', [HorariosController::class, 'storeAsignacion'])->name('horarios.store-asignacion');
+        
+        // Resource DEBE IR DESPUÉS de las rutas específicas
+        Route::resource('/horarios', HorariosController::class);
     });

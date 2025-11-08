@@ -1,31 +1,31 @@
 @extends('layouts.app')
 
-@section('title', 'Detalles del Rol: ' . $role->name)
+@section('title', 'Detalles del Aula: ' . $aula->nombre)
 
 @section('content')
 <div class="max-w-4xl mx-auto">
-    <div class="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
+    <div class="bg-white shadow-lg rounded-xl border border-[#3CA6A6] overflow-hidden">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-purple-700 px-4 py-5 sm:px-6">
+        <div class="bg-gradient-to-r from-[#012E40] to-[#026773] px-6 py-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h3 class="text-xl font-bold text-white">
-                        <i class="fas fa-user-shield mr-3"></i>
-                        Detalles del Rol
+                    <h3 class="text-2xl font-bold text-white">
+                        <i class="fas fa-building mr-3"></i>
+                        Detalles del Aula
                     </h3>
-                    <p class="mt-1 text-blue-100 text-sm">
-                        Información completa del rol {{ $role->name }}
+                    <p class="mt-2 text-[#F2E3D5] text-sm">
+                        Información completa del aula {{ $aula->nombre }}
                     </p>
                 </div>
-                <div class="flex space-x-2">
-                    <a href="{{ route('admin.roles.index') }}" 
-                       class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-lg font-semibold text-xs uppercase tracking-widest transition-all duration-200">
+                <div class="flex space-x-3">
+                    <a href="{{ route('admin.aulas.index') }}" 
+                       class="inline-flex items-center px-5 py-2.5 bg-[#F2E3D5]/20 hover:bg-[#F2E3D5]/30 text-[#F2E3D5] border border-[#F2E3D5]/30 rounded-xl font-semibold text-sm uppercase tracking-widest transition-all duration-200 transform hover:scale-105">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Volver
                     </a>
-                    @can('editar-roles')
-                    <a href="{{ route('admin.roles.edit', $role) }}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white border border-green-400 rounded-lg font-semibold text-xs uppercase tracking-widest transition-all duration-200">
+                    @can('editar-aulas')
+                    <a href="{{ route('admin.aulas.edit', $aula) }}" 
+                       class="inline-flex items-center px-5 py-2.5 bg-[#3CA6A6] hover:bg-[#026773] text-white border border-[#3CA6A6] rounded-xl font-semibold text-sm uppercase tracking-widest transition-all duration-200 transform hover:scale-105">
                         <i class="fas fa-edit mr-2"></i>
                         Editar
                     </a>
@@ -34,101 +34,129 @@
             </div>
         </div>
 
-        <div class="p-6">
+        <div class="p-6 bg-[#F2E3D5]">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Información Básica -->
-                <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
-                    <h4 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-                        <i class="fas fa-info-circle mr-2"></i>
+                <div class="bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">
+                    <h4 class="text-lg font-semibold text-[#012E40] mb-4 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-[#026773]"></i>
                         Información Básica
                     </h4>
-                    <dl class="space-y-3">
+                    <dl class="space-y-4">
                         <div>
-                            <dt class="text-sm font-medium text-blue-700">Nombre del Rol</dt>
-                            <dd class="mt-1 text-lg font-semibold text-gray-900">{{ $role->name }}</dd>
+                            <dt class="text-sm font-medium text-[#012E40]">Nombre</dt>
+                            <dd class="mt-1 text-lg text-[#024959]">{{ $aula->nombre }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-blue-700">Guard Name</dt>
-                            <dd class="mt-1 text-sm text-gray-600">{{ $role->guard_name }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-blue-700">Fecha de Creación</dt>
-                            <dd class="mt-1 text-sm text-gray-600">{{ $role->created_at->format('d/m/Y H:i:s') }}</dd>
+                            <dt class="text-sm font-medium text-[#012E40]">Tipo</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                    {{ $aula->tipo == 'laboratorio' ? 'bg-[#026773] text-white' : 
+                                       ($aula->tipo == 'biblioteca' ? 'bg-[#3CA6A6] text-[#012E40]' : 
+                                       ($aula->tipo == 'auditorio' ? 'bg-[#024959] text-white' : 
+                                       'bg-[#012E40] text-white')) }}">
+                                    <i class="fas 
+                                        {{ $aula->tipo == 'laboratorio' ? 'fa-flask' : 
+                                           ($aula->tipo == 'biblioteca' ? 'fa-book' : 
+                                           ($aula->tipo == 'auditorio' ? 'fa-theater-masks' : 'fa-chalkboard')) }} 
+                                        mr-2"></i>
+                                    {{ ucfirst($aula->tipo) }}
+                                </span>
+                            </dd>
                         </div>
                     </dl>
                 </div>
 
-                <!-- Estadísticas -->
-                <div class="bg-green-50 rounded-lg p-6 border border-green-200">
-                    <h4 class="text-lg font-semibold text-green-800 mb-4 flex items-center">
-                        <i class="fas fa-chart-bar mr-2"></i>
-                        Estadísticas
+                <!-- Capacidad y Estado -->
+                <div class="bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">
+                    <h4 class="text-lg font-semibold text-[#012E40] mb-4 flex items-center">
+                        <i class="fas fa-chart-bar mr-2 text-[#026773]"></i>
+                        Capacidad y Estado
                     </h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="text-center">
-                            <div class="bg-white rounded-lg p-3 border border-green-200">
-                                <div class="text-2xl font-bold text-green-600">{{ $role->users_count }}</div>
-                                <div class="text-sm text-green-700 font-medium">Usuarios</div>
+                            <div class="bg-white rounded-xl p-4 border border-[#3CA6A6] shadow-sm">
+                                <div class="text-3xl font-bold text-[#012E40]">{{ $aula->capacidad }}</div>
+                                <div class="text-sm font-medium text-[#024959] mt-1">Capacidad</div>
                             </div>
                         </div>
                         <div class="text-center">
-                            <div class="bg-white rounded-lg p-3 border border-green-200">
-                                <div class="text-2xl font-bold text-green-600">{{ $role->permissions->count() }}</div>
-                                <div class="text-sm text-green-700 font-medium">Permisos</div>
+                            <div class="bg-white rounded-xl p-4 border border-[#3CA6A6] shadow-sm">
+                                <div class="text-lg font-bold 
+                                    {{ $aula->estado == 'Disponible' ? 'text-green-600' : 
+                                       ($aula->estado == 'En Mantenimiento' ? 'text-yellow-600' : 'text-red-600') }}">
+                                    {{ $aula->estado }}
+                                </div>
+                                <div class="text-sm font-medium text-[#024959] mt-1">Estado</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Lista de Permisos -->
-            <div class="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200">
-                <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-key mr-2"></i>
-                    Permisos Asignados ({{ $role->permissions->count() }})
+            
+
+            <!-- Información Adicional -->
+            <div class="mt-6 bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">
+                <h4 class="text-lg font-semibold text-[#012E40] mb-4 flex items-center">
+                    <i class="fas fa-calendar-alt mr-2 text-[#026773]"></i>
+                    Información Adicional
                 </h4>
                 
-                @if($role->permissions->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    @foreach($role->permissions as $permiso)
-                    <div class="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow duration-200">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700">{{ $permiso->name }}</span>
-                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Permiso</span>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="text-sm font-semibold text-[#012E40] mb-2">Fecha de Creación</h5>
+                        <p class="text-[#024959]">{{ $aula->created_at->format('d/m/Y H:i:s') }}</p>
                     </div>
-                    @endforeach
+                    <div>
+                        <h5 class="text-sm font-semibold text-[#012E40] mb-2">Última Actualización</h5>
+                        <p class="text-[#024959]">{{ $aula->updated_at->format('d/m/Y H:i:s') }}</p>
+                    </div>
                 </div>
-                @else
-                <div class="text-center py-8">
-                    <i class="fas fa-key text-gray-300 text-4xl mb-3"></i>
-                    <p class="text-gray-500">Este rol no tiene permisos asignados.</p>
-                </div>
-                @endif
             </div>
 
-            <!-- Usuarios con este Rol -->
-            @if($role->users->count() > 0)
-            <div class="mt-6 bg-purple-50 rounded-lg p-6 border border-purple-200">
-                <h4 class="text-lg font-semibold text-purple-800 mb-4 flex items-center">
-                    <i class="fas fa-users mr-2"></i>
-                    Usuarios con este Rol ({{ $role->users->count() }})
+            <!-- Horarios Asignados (si existen) -->
+            @if($aula->grupoMateriaHorarios && $aula->grupoMateriaHorarios->count() > 0)
+            <div class="mt-6 bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">
+                <h4 class="text-lg font-semibold text-[#012E40] mb-4 flex items-center">
+                    <i class="fas fa-clock mr-2 text-[#026773]"></i>
+                    Horarios Asignados ({{ $aula->grupoMateriaHorarios->count() }})
                 </h4>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @foreach($role->users as $usuario)
-                    <div class="bg-white border border-purple-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
-                                {{ substr($usuario->name, 0, 1) }}
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-900">{{ $usuario->name }}</div>
-                                <div class="text-sm text-gray-600">{{ $usuario->email }}</div>
-                            </div>
+                    @foreach($aula->grupoMateriaHorarios as $horario)
+                    <div class="bg-white border border-[#3CA6A6] rounded-xl p-4 hover:shadow-md transition-all duration-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-semibold text-[#012E40]">
+                                {{ $horario->grupoMateria->materia->nombre ?? 'Materia no asignada' }}
+                            </span>
+                            <span class="text-xs bg-[#3CA6A6] text-white px-2 py-1 rounded-full">
+                                {{ $horario->horario->dia ?? 'Sin día' }}
+                            </span>
+                        </div>
+                        <div class="text-sm text-[#024959]">
+                            <i class="fas fa-clock mr-1"></i>
+                            {{ $horario->horario->hora_inicio ?? '' }} - {{ $horario->horario->hora_fin ?? '' }}
+                        </div>
+                        <div class="text-xs text-[#3CA6A6] mt-2">
+                            Grupo: {{ $horario->grupoMateria->grupo->nombre ?? 'No asignado' }}
                         </div>
                     </div>
                     @endforeach
+                </div>
+            </div>
+            @else
+            <div class="mt-6 bg-gradient-to-br from-[#F2E3D5] to-[#3CA6A6]/20 rounded-xl p-6 border border-[#3CA6A6] shadow-sm">
+                <h4 class="text-lg font-semibold text-[#012E40] mb-4 flex items-center">
+                    <i class="fas fa-clock mr-2 text-[#026773]"></i>
+                    Horarios Asignados
+                </h4>
+                <div class="text-center py-6">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center border border-[#3CA6A6]">
+                        <i class="fas fa-clock text-[#3CA6A6] text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-[#012E40] mb-2">Sin horarios asignados</h3>
+                    <p class="text-[#024959]">Esta aula no tiene horarios asignados actualmente.</p>
                 </div>
             </div>
             @endif

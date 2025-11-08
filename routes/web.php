@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolController;
-use App\Http\Controllers\DocenteController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\GestionAcademica\DocenteController;
+use App\Http\Controllers\Administracion\UserController;
 
 
 // Página de inicio
@@ -24,6 +24,10 @@ require __DIR__.'/auth.php';
 require __DIR__.'/admin.php';
 require __DIR__.'/docente.php';
 require __DIR__.'/coordinador.php';
+
+
+
+require __DIR__.'/visualizacion.php';
 // Ruta temporal para debug
 Route::get('/debug-auth', function() {
     if (auth()->check()) {

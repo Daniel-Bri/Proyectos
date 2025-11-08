@@ -8,32 +8,50 @@ use Illuminate\Database\Eloquent\Model;
 class Asistencia extends Model
 {
     use HasFactory;
+
+    // CORREGIDO: La tabla se llama 'asistencia' en singular
     protected $table = 'asistencia';
+    
     protected $fillable = [
         'fecha',
-        'hora_registro',
+        'hora_registro', 
         'estado',
-        'codigo_docente',
-        'id_grupo_materia',
-        'id_horario'
+        'id_grupo_materia_horario'
     ];
 
-    // Relación con Docente
-    public function docente()
+    protected $casts = [
+        'fecha' => 'date',
+        'hora_registro' => 'datetime'
+    ];
+
+    // Relación con GrupoMateriaHorario
+    public function grupoMateriaHorario()
     {
-        return $this->belongsTo(Docente::class, 'codigo_docente');
+        return $this->belongsTo(GrupoMateriaHorario::class, 'id_grupo_materia_horario');
     }
 
-    // Relación con GrupoMateria
+    // Relación indirecta con GrupoMateria a través de GrupoMateriaHorario
     public function grupoMateria()
     {
-        return $this->belongsTo(GrupoMateria::class, 'id_grupo_materia');
+        return $this->hasOneThrough(
+            GrupoMateria::class,
+            GrupoMateriaHorario::class,
+            'id', // Foreign key on GrupoMateriaHorario table
+            'id', // Foreign key on GrupoMateria table  
+            'id_grupo_materia_horario', // Local key on Asistencia table
+            'id_grupo_materia' // Local key on GrupoMateriaHorario table
+        );
     }
 
-    // Relación con Horario
-    public function horario()
+    // Scope para búsquedas por fecha
+    public function scopePorFecha($query, $fecha)
     {
-        return $this->belongsTo(Horario::class, 'id_horario');
+        return $query->where('fecha', $fecha);
     }
-    
+
+    // Scope para estado específico
+    public function scopePorEstado($query, $estado)
+    {
+        return $query->where('estado', $estado);
+    }
 }

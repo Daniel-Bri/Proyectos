@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\GestionAcademica;
 
+use App\Http\Controllers\Controller;
 use App\Models\Docente;
 use App\Models\User;
 use App\Models\Materia;
@@ -335,82 +336,90 @@ class DocenteController extends Controller
     // =============================================
     // MÉTODOS PARA CARGA HORARIA
     // =============================================
-    public function cargaHoraria($codigo)
-    {
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
-
-        $docente = Docente::with(['user', 'carreras'])->findOrFail($codigo);
-        
-        // Registrar en bitácora
-        BitacoraController::registrar('Consulta', 'Carga Horaria', $codigo, auth()->id(), null, "Consultó carga horaria del docente {$docente->user->name}");
-        
-        // Obtener grupos asignados al docente a través de ASISTENCIA - CORREGIDO
-        $gruposAsignados = GrupoMateria::whereHas('asistencias', function($query) use ($docente) {
-            $query->where('codigo_docente', $docente->codigo);
-        })
-        ->with(['materia', 'grupo', 'gestion', 'horarios.horario', 'horarios.aula'])
-        ->get();
-
-        // Obtener TODOS los grupos existentes (para mostrar en la vista)
-        $gruposExistentes = GrupoMateria::with(['materia', 'grupo', 'gestion'])
-        ->get()
-        ->groupBy(function($item) {
-            return $item->materia->sigla . ' - ' . $item->grupo->nombre . ' - ' . $item->gestion->semestre;
-        });
-
-        // Calcular horas por materia y totales
-        $cargaPorMateria = [];
-        $totalHorasSemana = 0;
-
-        foreach ($gruposAsignados as $grupoMateria) {
-            $horasMateria = 0;
-            
-            foreach ($grupoMateria->horarios as $horarioAsignado) {
-                if ($horarioAsignado->horario) {
-                    $horaInicio = Carbon::parse($horarioAsignado->horario->hora_inicio);
-                    $horaFin = Carbon::parse($horarioAsignado->horario->hora_fin);
-                    $horasMateria += $horaInicio->diffInHours($horaFin);
-                }
-            }
-
-            $materiaKey = $grupoMateria->materia->sigla . '_' . $grupoMateria->id_gestion;
-            
-            if (!isset($cargaPorMateria[$materiaKey])) {
-                $cargaPorMateria[$materiaKey] = [
-                    'materia' => $grupoMateria->materia,
-                    'gestion' => $grupoMateria->gestion,
-                    'horas_semana' => 0,
-                    'grupos' => []
-                ];
-            }
-            
-            $cargaPorMateria[$materiaKey]['horas_semana'] += $horasMateria;
-            $cargaPorMateria[$materiaKey]['grupos'][] = $grupoMateria;
-            $totalHorasSemana += $horasMateria;
-        }
-
-        // Obtener datos para formulario de asignación
-        $aulas = Aula::all();
-        $gestiones = GestionAcademica::all();
-        $grupos = Grupo::all();
-        
-        // SOLUCIÓN DEFINITIVA: Obtener TODAS las materias para el select
-        $materias = Materia::all();
-
-        return view('admin.docentes.carga-horaria', compact(
-            'docente', 
-            'cargaPorMateria',
-            'totalHorasSemana',
-            'aulas',
-            'gestiones',
-            'grupos',
-            'materias',
-            'gruposAsignados',
-            'gruposExistentes'
-        ));
+   public function cargaHoraria($codigo)
+{
+    if (!auth()->check()) {
+        return redirect()->route('login');
     }
+
+    $docente = Docente::with(['user', 'carreras'])->findOrFail($codigo);
+    
+    // Registrar en bitácora
+    BitacoraController::registrar('Consulta', 'Carga Horaria', $codigo, auth()->id(), null, "Consultó carga horaria del docente {$docente->user->name}");
+    
+    // SOLUCIÓN CORREGIDA: Obtener grupos a través de grupo_materia_horario
+    $gruposAsignados = GrupoMateria::whereHas('horarios', function($query) use ($docente) {
+        $query->where('id_docente', $docente->codigo)
+              ->where('estado_aula', 'ocupado');
+    })
+    ->with([
+        'materia', 
+        'grupo', 
+        'gestion', 
+        'horarios' => function($query) use ($docente) {
+            $query->where('id_docente', $docente->codigo)
+                  ->where('estado_aula', 'ocupado')
+                  ->with(['horario', 'aula', 'asistencias']);
+        }
+    ])
+    ->get();
+
+    // Obtener TODOS los grupos existentes (para mostrar en la vista)
+    $gruposExistentes = GrupoMateria::with(['materia', 'grupo', 'gestion'])
+    ->get()
+    ->groupBy(function($item) {
+        return $item->materia->sigla . ' - ' . $item->grupo->nombre . ' - ' . $item->gestion->semestre;
+    });
+
+    // Calcular horas por materia y totales
+    $cargaPorMateria = [];
+    $totalHorasSemana = 0;
+
+    foreach ($gruposAsignados as $grupoMateria) {
+        $horasMateria = 0;
+        
+        foreach ($grupoMateria->horarios as $horarioAsignado) {
+            if ($horarioAsignado->horario) {
+                $horaInicio = Carbon::parse($horarioAsignado->horario->hora_inicio);
+                $horaFin = Carbon::parse($horarioAsignado->horario->hora_fin);
+                $horasMateria += $horaInicio->diffInHours($horaFin);
+            }
+        }
+
+        $materiaKey = $grupoMateria->materia->sigla . '_' . $grupoMateria->id_gestion;
+        
+        if (!isset($cargaPorMateria[$materiaKey])) {
+            $cargaPorMateria[$materiaKey] = [
+                'materia' => $grupoMateria->materia,
+                'gestion' => $grupoMateria->gestion,
+                'horas_semana' => 0,
+                'grupos' => []
+            ];
+        }
+        
+        $cargaPorMateria[$materiaKey]['horas_semana'] += $horasMateria;
+        $cargaPorMateria[$materiaKey]['grupos'][] = $grupoMateria;
+        $totalHorasSemana += $horasMateria;
+    }
+
+    // Obtener datos para formulario de asignación
+    $aulas = Aula::all();
+    $gestiones = GestionAcademica::all();
+    $grupos = Grupo::all();
+    $materias = Materia::all();
+
+    return view('admin.docentes.carga-horaria', compact(
+        'docente', 
+        'cargaPorMateria',
+        'totalHorasSemana',
+        'aulas',
+        'gestiones',
+        'grupos',
+        'materias',
+        'gruposAsignados',
+        'gruposExistentes'
+    ));
+}
 
     public function asignarGrupo(Request $request, $codigo)
     {
@@ -644,72 +653,82 @@ class DocenteController extends Controller
     // =============================================
     // MÉTODO PARA QUE EL DOCENTE VEA SU PROPIA CARGA HORARIA (SIN PARÁMETRO)
     // =============================================
-    public function miCargaHoraria()
-    {
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
-
-        // Obtener el docente autenticado
-        $user = auth()->user();
-        $docente = $user->docente;
-
-        if (!$docente) {
-            return redirect()->route('dashboard')
-                ->with('error', 'No se encontró información del docente.');
-        }
-
-        // Cargar relaciones necesarias
-        $docente->load(['user', 'carreras']);
-
-        // Obtener grupos asignados al docente a través de ASISTENCIA
-        $gruposAsignados = GrupoMateria::whereHas('asistencias', function($query) use ($docente) {
-            $query->where('codigo_docente', $docente->codigo);
-        })
-        ->with(['materia', 'grupo', 'gestion', 'horarios.horario', 'horarios.aula'])
-        ->get();
-
-        // Calcular horas por materia y totales
-        $cargaPorMateria = [];
-        $totalHorasSemana = 0;
-
-        foreach ($gruposAsignados as $grupoMateria) {
-            $horasMateria = 0;
-            
-            foreach ($grupoMateria->horarios as $horarioAsignado) {
-                if ($horarioAsignado->horario) {
-                    $horaInicio = Carbon::parse($horarioAsignado->horario->hora_inicio);
-                    $horaFin = Carbon::parse($horarioAsignado->horario->hora_fin);
-                    $horasMateria += $horaInicio->diffInHours($horaFin);
-                }
-            }
-
-            $materiaKey = $grupoMateria->materia->sigla . '_' . $grupoMateria->id_gestion;
-            
-            if (!isset($cargaPorMateria[$materiaKey])) {
-                $cargaPorMateria[$materiaKey] = [
-                    'materia' => $grupoMateria->materia,
-                    'gestion' => $grupoMateria->gestion,
-                    'horas_semana' => 0,
-                    'grupos' => []
-                ];
-            }
-            
-            $cargaPorMateria[$materiaKey]['horas_semana'] += $horasMateria;
-            $cargaPorMateria[$materiaKey]['grupos'][] = $grupoMateria;
-            $totalHorasSemana += $horasMateria;
-        }
-
-        // Registrar en bitácora
-        BitacoraController::registrar('Consulta', 'Mi Carga Horaria', $docente->codigo, $user->id, null, "Consultó su propia carga horaria");
-
-        return view('docente.carga-horaria', compact(
-            'docente', 
-            'cargaPorMateria',
-            'totalHorasSemana',
-            'gruposAsignados'
-        ));
+ public function miCargaHoraria()
+{
+    if (!auth()->check()) {
+        return redirect()->route('login');
     }
+
+    // Obtener el docente autenticado
+    $user = auth()->user();
+    $docente = $user->docente;
+
+    if (!$docente) {
+        return redirect()->route('dashboard')
+            ->with('error', 'No se encontró información del docente.');
+    }
+
+    // Cargar relaciones necesarias
+    $docente->load(['user', 'carreras']);
+
+    // SOLUCIÓN CORREGIDA: Obtener grupos a través de grupo_materia_horario
+    $gruposAsignados = GrupoMateria::whereHas('horarios', function($query) use ($docente) {
+        $query->where('id_docente', $docente->codigo)
+              ->where('estado_aula', 'ocupado');
+    })
+    ->with([
+        'materia', 
+        'grupo', 
+        'gestion', 
+        'horarios' => function($query) use ($docente) {
+            $query->where('id_docente', $docente->codigo)
+                  ->where('estado_aula', 'ocupado')
+                  ->with(['horario', 'aula']);
+        }
+    ])
+    ->get();
+
+    // Calcular horas por materia y totales
+    $cargaPorMateria = [];
+    $totalHorasSemana = 0;
+
+    foreach ($gruposAsignados as $grupoMateria) {
+        $horasMateria = 0;
+        
+        foreach ($grupoMateria->horarios as $horarioAsignado) {
+            if ($horarioAsignado->horario) {
+                $horaInicio = Carbon::parse($horarioAsignado->horario->hora_inicio);
+                $horaFin = Carbon::parse($horarioAsignado->horario->hora_fin);
+                $horasMateria += $horaInicio->diffInHours($horaFin);
+            }
+        }
+
+        $materiaKey = $grupoMateria->materia->sigla . '_' . $grupoMateria->id_gestion;
+        
+        if (!isset($cargaPorMateria[$materiaKey])) {
+            $cargaPorMateria[$materiaKey] = [
+                'materia' => $grupoMateria->materia,
+                'gestion' => $grupoMateria->gestion,
+                'horas_semana' => 0,
+                'grupos' => []
+            ];
+        }
+        
+        $cargaPorMateria[$materiaKey]['horas_semana'] += $horasMateria;
+        $cargaPorMateria[$materiaKey]['grupos'][] = $grupoMateria;
+        $totalHorasSemana += $horasMateria;
+    }
+
+    // Registrar en bitácora
+    BitacoraController::registrar('Consulta', 'Mi Carga Horaria', $docente->codigo, $user->id, null, "Consultó su propia carga horaria");
+
+    return view('docente.carga-horaria', compact(
+        'docente', 
+        'cargaPorMateria',
+        'totalHorasSemana',
+        'gruposAsignados'
+    ));
+}
 
     // =============================================
     // MÉTODO PARA QUE EL DOCENTE VEA SU PERFIL

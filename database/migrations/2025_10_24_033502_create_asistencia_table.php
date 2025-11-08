@@ -12,14 +12,11 @@ return new class extends Migration
             $table->id();
             $table->date('fecha');
             $table->time('hora_registro');
-            $table->enum('estado', ['presente', 'ausente', 'justificado'])->default('presente');
-            $table->string('codigo_docente');
-            $table->foreign('codigo_docente')->references('codigo')->on('docente')->onDelete('cascade');
-            $table->foreignId('id_grupo_materia')->constrained('grupo_materia')->onDelete('cascade');
-            $table->foreignId('id_horario')->constrained('horario')->onDelete('cascade');
+            $table->enum('estado', ['presente', 'ausente', 'justificado', 'tardanza'])->default('presente');
+            $table->foreignId('id_grupo_materia_horario')->constrained('grupo_materia_horario')->onDelete('cascade');
             $table->timestamps();
             
-            $table->unique(['fecha', 'codigo_docente', 'id_grupo_materia', 'id_horario']);
+            $table->unique(['fecha', 'id_grupo_materia_horario']);
         });
     }
 

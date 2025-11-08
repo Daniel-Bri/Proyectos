@@ -197,10 +197,11 @@
                                         <i class="fas fa-edit mr-2"></i>
                                         Editar
                                     </a>
-                                    <a href="{{ route('admin.materias.asignar-grupo', $materia->sigla) }}" 
+                                    <!-- CORREGIDO: Cambiado de asignar-grupo a asignar-aulas -->
+                                    <a href="{{ route('admin.materias.asignar-aulas', $materia->sigla) }}" 
                                        class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                                        <i class="fas fa-users mr-2"></i>
-                                        Grupos
+                                        <i class="fas fa-door-open mr-2"></i>
+                                        Aulas
                                     </a>
                                     <form action="{{ route('admin.materias.destroy', $materia->sigla) }}" method="POST" class="inline">
                                         @csrf

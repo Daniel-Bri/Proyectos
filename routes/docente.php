@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MateriaController;
-use App\Http\Controllers\HorarioController;
-use App\Http\Controllers\DocenteController;
+use App\Http\Controllers\GestionAcademica\MateriaController;
+use App\Http\Controllers\GestionAcademica\DocenteController;
+use App\Http\Controllers\GestionDeHorarios\HorariosController;
 
 Route::prefix('docente')
     ->middleware(['auth', 'role:docente'])
@@ -28,6 +28,10 @@ Route::prefix('docente')
         
         // Perfil del docente
         Route::get('/perfil', [DocenteController::class, 'perfil'])->name('perfil');
+
+        // Horarios del docente 
+        Route::get('/horarios', [HorariosController::class, 'indexDocente'])->name('horarios.index');
+        Route::get('/mi-horario', [HorariosController::class, 'miHorario'])->name('mi-horario'); 
         
         // Carga Horaria
         Route::get('/carga-horaria', [DocenteController::class, 'miCargaHoraria'])->name('carga-horaria.index');

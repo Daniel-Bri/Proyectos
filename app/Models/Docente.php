@@ -62,7 +62,7 @@ class Docente extends Model
         return $this->hasManyThrough(
             GrupoMateria::class,
             GrupoMateriaHorario::class,
-            'codigo_docente', // Foreign key on GrupoMateriaHorario
+            'id_docente', // Foreign key on GrupoMateriaHorario
             'id', // Foreign key on GrupoMateria  
             'codigo', // Local key on Docente
             'id_grupo_materia' // Local key on GrupoMateriaHorario
