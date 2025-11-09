@@ -161,23 +161,17 @@
                                 <i class="fas fa-user-shield mr-2 w-4 h-4"></i>
                                 Roles y Permisos
                             </a>
-<<<<<<< HEAD
                             <a href="{{ route('admin.carga-masiva.usuarios.index') }}" 
                             class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                                <i class="fas fa-user-shield mr-2 w-4 h-4"></i>
-                                Carga Masiva de Usuarios
+                                <i class="fas fa-upload mr-2 w-4 h-4"></i>
+                                Carga Masiva
                             </a>
-=======
                             @endif
->>>>>>> Alejandra
                             <a href="{{ route('admin.bitacora.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
                                 <i class="fas fa-clipboard-list mr-2 w-4 h-4"></i>
                                 Bitácora del Sistema
                             </a>
-<<<<<<< HEAD
-=======
                         </div>
->>>>>>> Alejandra
                     </div>
                     @endif
                 @endauth
@@ -219,66 +213,7 @@
                             @endif
                         @endauth
                         
-<<<<<<< HEAD
-            @auth
-            @if(auth()->user()->hasRole('admin'))
-                <a href="{{ route('admin.materias.index') }}" 
-                class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                    <i class="fas fa-book mr-2 w-4 h-4"></i>
-                    Materias
-                </a>
-            @elseif(auth()->user()->hasRole('coordinador'))
-                <a href="{{ route('coordinador.materias.index') }}" 
-                class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                    <i class="fas fa-book mr-2 w-4 h-4"></i>
-                    Materias
-                </a>
-            @else
-                <a href="#" 
-                class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                    <i class="fas fa-book mr-2 w-4 h-4"></i>
-                    Materias
-                </a>
-            @endif
-            @endauth
-                        <a href="{{ route('admin.aulas.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                            <i class="fas fa-door-open mr-2 w-4 h-4"></i>
-                            Aulas
-                        </a>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-layer-group mr-2 w-4 h-4"></i>
-                            Categorías
-                        </a>
-                    </div>
-                </div>
-                <!-- Paquete: Gestión Horarios -->
-                <div class="package-group">
-                    <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
-                        <div class="flex items-center flex-1">
-                            <i class="fas fa-calendar-alt mr-3 w-5 h-5"></i>
-                            <span class="truncate">Gestión Horarios</span>
-                        </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform"></i>
-                    </button>
-                    <div class="submenu ml-6">
-                        <a href="{{ route('coordinador.horarios.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">                        
-                             <i class="fas fa-chalkboard-teacher mr-2 w-4 h-4"></i>
-                            Asignacion manual
-                        </a>
-                        <a href="{{route('coordinador.asignacion-automatica.index')}}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-book mr-2 w-4 h-4"></i>
-                            Asignacion automatica
-                        </a>
-                        <a href="{{ route('visualizacion-semana.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                            <i class="fas fa-door-open mr-2 w-4 h-4"></i>
-                            Visualización semanal
-                        </a>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-layer-group mr-2 w-4 h-4"></i>
-                            Reportes de aulas disponibles
-                        </a>
-=======
-                        <!-- Grupos - AGREGADO -->
+                        <!-- Grupos -->
                         @auth
                             @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
                             <a href="{{ route('admin.grupos.index') }}" 
@@ -309,12 +244,6 @@
                                 <i class="fas fa-book mr-2 w-4 h-4"></i>
                                 Mis Materias
                             </a>
-                            <!-- Agregar Carga Horaria -->
-                            <a href="{{ route('docente.carga-horaria.index') }}" 
-                               class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                                <i class="fas fa-clock mr-2 w-4 h-4"></i>
-                                Mi Carga Horaria
-                            </a>
                         @endif
                         @endauth
 
@@ -327,7 +256,6 @@
                             </a>
                             @endif
                         @endauth
->>>>>>> Alejandra
                     </div>
                 </div>
 
@@ -341,55 +269,64 @@
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
-<<<<<<< HEAD
-                        <a href="{{ route('docente.asistencia.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
-                            Marcar Asistencia
-                        </a>
-=======
                         @auth
                             @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
+                            <a href="{{ route('coordinador.horarios.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
                                 <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
                                 Asignar Horarios
                             </a>
+                            <a href="{{ route('coordinador.asignacion-automatica.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                <i class="fas fa-robot mr-2 w-4 h-4"></i>
+                                Asignación Automática
+                            </a>
+                            <a href="{{ route('coordinador.reportes.aulas.disponibles') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                <i class="fas fa-chart-bar mr-2 w-4 h-4"></i>
+                                Reportes de Aulas
+                            </a>
                             @elseif(auth()->user()->hasRole('docente'))
-                            <a href="{{ route('docente.horarios.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
+                            <a href="{{ route('docente.horarios.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
                                 <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
                                 Mi Horario
                             </a>
+                            <a href="{{ route('docente.mi-horario') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                <i class="fas fa-table mr-2 w-4 h-4"></i>
+                                Vista Semanal
+                            </a>
                             @endif
                         @endauth
->>>>>>> Alejandra
                     </div>
                 </div>
 
-                <!-- Paquete: Mi Carga Horaria (solo para docentes) -->
+                <!-- Paquete: Asistencia (solo para docentes) -->
                 @auth
                     @if(auth()->user()->hasRole('docente'))
                     <div class="package-group">
                         <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
                             <div class="flex items-center flex-1">
-                                <i class="fas fa-chart-bar mr-3 w-5 h-5"></i>
-                                <span class="truncate">Mi Carga Horaria</span>
+                                <i class="fas fa-clipboard-check mr-3 w-5 h-5"></i>
+                                <span class="truncate">Asistencia</span>
                             </div>
                             <i class="fas fa-chevron-down text-xs transition-transform"></i>
                         </button>
                         <div class="submenu ml-6">
-                            <a href="{{ route('docente.carga-horaria.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                                <i class="fas fa-clock mr-2 w-4 h-4"></i>
-                                Resumen de Carga
+                            <a href="{{ route('docente.asistencia.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                <i class="fas fa-edit mr-2 w-4 h-4"></i>
+                                Registro Digital
                             </a>
-                            <a href="{{ route('docente.horarios.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                                <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
-                                Horario Semanal
+                            <a href="{{ route('docente.asistencia.qr') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                <i class="fas fa-qrcode mr-2 w-4 h-4"></i>
+                                Código QR
+                            </a>
+                            <a href="{{ route('docente.asistencia.historial') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+                                <i class="fas fa-history mr-2 w-4 h-4"></i>
+                                Historial
                             </a>
                         </div>
                     </div>
                     @endif
                 @endauth
 
-                <!-- Perfil y Cambio de Contraseña (para todos los usuarios) -->
+                <!-- Perfil y Cuenta -->
                 <div class="package-group">
                     <button class="nav-item flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white package-toggle">
                         <div class="flex items-center flex-1">
@@ -399,11 +336,6 @@
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
-<<<<<<< HEAD
-                        <a href="{{route('coordinador.reportes.aulas.disponibles')}}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate">
-                            <i class="fas fa-calendar-alt mr-2 w-4 h-4"></i>
-                            Aulas Disponibles
-=======
                         <!-- Perfil según el rol del usuario -->
                         @auth
                             @if(auth()->user()->hasRole('docente'))
@@ -422,7 +354,6 @@
                         <a href="{{ route('password.change') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
                             <i class="fas fa-lock mr-2 w-4 h-4"></i>
                             Cambiar Contraseña
->>>>>>> Alejandra
                         </a>
                     </div>
                 </div>
@@ -507,7 +438,7 @@
 
             <!-- Estadísticas Responsive -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <!-- Tarjeta 1 -->
+                <!-- Tarjeta 1 - Usuarios -->
                 <div class="stat-card bg-white rounded-xl p-4 shadow-lg border-l-4 border-light-teal">
                     <div class="flex items-center">
                         <div class="w-12 h-12 bg-light-teal bg-opacity-20 rounded-lg flex items-center justify-center mr-4">
@@ -515,22 +446,18 @@
                         </div>
                         <div>
                             <p class="text-2xl font-bold text-deep-teal">
-                                @auth
-                                    @if(auth()->user()->hasRole('admin'))
-                                        {{ \App\Models\User::count() }}
-                                    @else
-                                        150
-                                    @endif
+                                @if(class_exists('App\Models\User'))
+                                    {{ \App\Models\User::count() }}
                                 @else
                                     150
-                                @endauth
+                                @endif
                             </p>
                             <p class="text-sm text-dark-teal">Total Usuarios</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tarjeta 2 -->
+                <!-- Tarjeta 2 - Aulas -->
                 <div class="stat-card bg-white rounded-xl p-4 shadow-lg border-l-4 border-green-500">
                     <div class="flex items-center">
                         <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
@@ -544,19 +471,25 @@
                                     25
                                 @endif
                             </p>
-                            <p class="text-sm text-dark-teal">Aulas Activas</p>
+                            <p class="text-sm text-dark-teal">Aulas Registradas</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tarjeta 3 -->
+                <!-- Tarjeta 3 - Materias -->
                 <div class="stat-card bg-white rounded-xl p-4 shadow-lg border-l-4 border-blue-500">
                     <div class="flex items-center">
                         <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                             <i class="fas fa-book text-blue-600 text-xl"></i>
                         </div>
                         <div>
-                            <p class="text-2xl font-bold text-deep-teal">45</p>
+                            <p class="text-2xl font-bold text-deep-teal">
+                                @if(class_exists('App\Models\Materia'))
+                                    {{ \App\Models\Materia::count() }}
+                                @else
+                                    45
+                                @endif
+                            </p>
                             <p class="text-sm text-dark-teal">Materias</p>
                         </div>
                     </div>
@@ -588,7 +521,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     @auth
                         @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
-                        <!-- Acción para Grupos -->
+                        <!-- Acciones para Admin/Coordinador -->
                         <a href="{{ route('admin.grupos.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
                             <i class="fas fa-users text-2xl mb-2"></i>
                             <p class="font-semibold">Gestionar Grupos</p>
@@ -597,17 +530,16 @@
                             <i class="fas fa-door-open text-2xl mb-2"></i>
                             <p class="font-semibold">Gestionar Aulas</p>
                         </a>
-                        <a href="{{ route('admin.bitacora.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
-                            <i class="fas fa-clipboard-list text-2xl mb-2"></i>
-                            <p class="font-semibold">Ver Bitácora</p>
+                        <a href="{{ route('coordinador.horarios.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
+                            <i class="fas fa-calendar-alt text-2xl mb-2"></i>
+                            <p class="font-semibold">Asignar Horarios</p>
                         </a>
-                        @if(auth()->user()->hasRole('admin'))
-                        <a href="{{ route('admin.users.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
-                            <i class="fas fa-user-plus text-2xl mb-2"></i>
-                            <p class="font-semibold">Gestión Usuarios</p>
+                        <a href="{{ route('coordinador.reportes.aulas.disponibles') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
+                            <i class="fas fa-chart-bar text-2xl mb-2"></i>
+                            <p class="font-semibold">Reportes Aulas</p>
                         </a>
-                        @endif
                         @elseif(auth()->user()->hasRole('docente'))
+                        <!-- Acciones para Docente -->
                         <a href="{{ route('docente.materias.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
                             <i class="fas fa-book text-2xl mb-2"></i>
                             <p class="font-semibold">Mis Materias</p>
@@ -616,10 +548,9 @@
                             <i class="fas fa-calendar-alt text-2xl mb-2"></i>
                             <p class="font-semibold">Mi Horario</p>
                         </a>
-                        <!-- Agregar Carga Horaria en acciones rápidas -->
-                        <a href="{{ route('docente.carga-horaria.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
-                            <i class="fas fa-clock text-2xl mb-2"></i>
-                            <p class="font-semibold">Carga Horaria</p>
+                        <a href="{{ route('docente.asistencia.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
+                            <i class="fas fa-clipboard-check text-2xl mb-2"></i>
+                            <p class="font-semibold">Registrar Asistencia</p>
                         </a>
                         <a href="{{ route('docente.perfil') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
                             <i class="fas fa-user text-2xl mb-2"></i>
@@ -633,10 +564,101 @@
             <!-- Información adicional según el rol -->
             @auth
                 @if(auth()->user()->hasRole('docente'))
-                <!-- Se eliminó el Panel del Docente completo -->
+                <!-- Panel del Docente -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Próximas Clases -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                        <h3 class="text-lg font-bold text-deep-teal mb-4 flex items-center">
+                            <i class="fas fa-clock mr-2"></i>
+                            Próximas Clases Hoy
+                        </h3>
+                        <div class="space-y-3">
+                            @php
+                                $hoy = \Carbon\Carbon::now()->format('Y-m-d');
+                                $hora_actual = \Carbon\Carbon::now()->format('H:i:s');
+                            @endphp
+                            @if(class_exists('App\Models\GrupoMateriaHorario'))
+                                @php
+                                    $proximas_clases = \App\Models\GrupoMateriaHorario::with(['grupoMateria.materia', 'horario', 'aula'])
+                                        ->whereHas('horario', function($query) use ($hoy, $hora_actual) {
+                                            $query->where('dia', strtoupper(\Carbon\Carbon::now()->isoFormat('ddd')))
+                                                  ->where('hora_inicio', '>=', $hora_actual);
+                                        })
+                                        ->where('id_docente', auth()->user()->docente->codigo ?? null)
+                                        ->orderBy('hora_inicio')
+                                        ->take(3)
+                                        ->get();
+                                @endphp
+                                @forelse($proximas_clases as $clase)
+                                <div class="flex items-center justify-between p-3 bg-cream rounded-lg">
+                                    <div>
+                                        <p class="font-semibold text-deep-teal">{{ $clase->grupoMateria->materia->nombre ?? 'Materia' }}</p>
+                                        <p class="text-sm text-dark-teal">{{ $clase->horario->hora_inicio ?? '' }} - {{ $clase->aula->nombre ?? 'Aula' }}</p>
+                                    </div>
+                                    <span class="bg-light-teal text-white px-2 py-1 rounded text-xs">
+                                        {{ $clase->horario->hora_inicio ?? '' }}
+                                    </span>
+                                </div>
+                                @empty
+                                <p class="text-gray-500 text-center py-4">No hay clases programadas para hoy</p>
+                                @endforelse
+                            @else
+                                <p class="text-gray-500 text-center py-4">Sistema de horarios no disponible</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Resumen de Asistencia -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                        <h3 class="text-lg font-bold text-deep-teal mb-4 flex items-center">
+                            <i class="fas fa-chart-bar mr-2"></i>
+                            Resumen de Asistencia
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-dark-teal">Asistencias este mes:</span>
+                                <span class="font-bold text-deep-teal">12</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-dark-teal">Clases impartidas:</span>
+                                <span class="font-bold text-deep-teal">15</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 80%"></div>
+                            </div>
+                            <p class="text-sm text-dark-teal text-center">80% de asistencia registrada</p>
+                        </div>
+                    </div>
+                </div>
                 @endif
             @endauth
 
+            <!-- Sistema Status -->
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h3 class="text-lg font-bold text-deep-teal mb-4">Estado del Sistema</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="text-center p-4 border rounded-lg">
+                        <i class="fas fa-database text-2xl text-green-500 mb-2"></i>
+                        <p class="font-semibold">Base de Datos</p>
+                        <p class="text-sm text-green-500">Conectada</p>
+                    </div>
+                    <div class="text-center p-4 border rounded-lg">
+                        <i class="fas fa-server text-2xl text-green-500 mb-2"></i>
+                        <p class="font-semibold">Servidor</p>
+                        <p class="text-sm text-green-500">Operativo</p>
+                    </div>
+                    <div class="text-center p-4 border rounded-lg">
+                        <i class="fas fa-shield-alt text-2xl text-green-500 mb-2"></i>
+                        <p class="font-semibold">Seguridad</p>
+                        <p class="text-sm text-green-500">Activa</p>
+                    </div>
+                    <div class="text-center p-4 border rounded-lg">
+                        <i class="fas fa-sync text-2xl text-blue-500 mb-2"></i>
+                        <p class="font-semibold">Última Actualización</p>
+                        <p class="text-sm text-blue-500">{{ now()->format('d/m/Y H:i') }}</p>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 

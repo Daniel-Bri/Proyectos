@@ -3,20 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GestionAcademica\AulaController;
 use App\Http\Controllers\Administracion\BitacoraController;
-<<<<<<< HEAD
-use App\Http\Controllers\RolController;
-use App\Http\Controllers\DocenteController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\MateriaController;
-use App\Http\Controllers\Administracion\CargaMasivaUsuariosController;
-=======
 use App\Http\Controllers\Administracion\RolController;
 use App\Http\Controllers\Administracion\UserController;
 use App\Http\Controllers\GestionAcademica\DocenteController;
 use App\Http\Controllers\GestionAcademica\MateriaController;
-use App\Http\Controllers\GestionDeHorarios\HorariosController;
 use App\Http\Controllers\GestionAcademica\GrupoController;
->>>>>>> Alejandra
+use App\Http\Controllers\GestionDeHorarios\HorariosController;
+use App\Http\Controllers\Administracion\CargaMasivaUsuariosController;
 
 // Panel administrativo (solo usuarios con rol “admin”)
 Route::prefix('admin')
