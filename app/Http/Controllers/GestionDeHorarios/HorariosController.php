@@ -584,4 +584,165 @@ class HorariosController extends Controller
 
         return $query->exists();
     }
+
+    private function obtenerFiltrosBitacora(Request $request)
+    {
+        $filtros = [];
+        
+        if ($request->filled('docente_id')) {
+            $filtros[] = "docente: {$request->docente_id}";
+        }
+        
+        if ($request->filled('materia_id')) {
+            $filtros[] = "materia: {$request->materia_id}";
+        }
+        
+        if ($request->filled('grupo_id')) {
+            $filtros[] = "grupo: {$request->grupo_id}";
+        }
+
+        return $filtros ? implode(', ', $filtros) : 'Sin filtros';
+    }
+
+    /**
+     * Obtener los cambios realizados en una actualización
+     */
+    private function obtenerCambiosBitacora(array $datosAntiguos, array $datosNuevos)
+    {
+        $cambios = [];
+        $camposRelevantes = [
+            'dia' => 'Día',
+            'hora_inicio' => 'Hora inicio',
+            'hora_fin' => 'Hora fin',
+            'docente' => 'Docente',
+            'materia' => 'Materia',
+            'grupo' => 'Grupo',
+            'aula' => 'Aula',
+            'estado' => 'Estado aula'
+        ];
+
+        foreach ($camposRelevantes as $campo => $label) {
+            if (isset($datosAntiguos[$campo]) && isset($datosNuevos[$campo]) && 
+                $datosAntiguos[$campo] != $datosNuevos[$campo]) {
+                $cambios[] = "{$label}: '{$datosAntiguos[$campo]}' → '{$datosNuevos[$campo]}'";
+            }
+        }
+
+        return implode('; ', $cambios);
+    }
+
+    /**
+     * Vista de lista de horarios para docente (versión mejorada)
+     */
+    public function indexDocente(Request $request)
+    {
+        // Obtener el docente actual
+        $docente = Docente::where('id_users', auth()->id())->first();
+        
+        if (!$docente) {
+            return view('docente.horarios.sin-docente', [
+                'message' => 'No se encontró un perfil de docente asociado a tu usuario.'
+            ]);
+        }
+
+        // Obtener horarios del docente usando whereHas para ordenar
+        $horarios = GrupoMateriaHorario::with([
+            'horario',
+            'grupoMateria.materia',
+            'grupoMateria.grupo',
+            'aula'
+        ])
+        ->where('id_docente', $docente->codigo)
+        ->where('estado_aula', 'ocupado')
+        ->whereHas('horario', function($query) {
+            $query->orderByRaw("
+                CASE 
+                    WHEN dia = 'LUN' THEN 1
+                    WHEN dia = 'MAR' THEN 2
+                    WHEN dia = 'MIE' THEN 3
+                    WHEN dia = 'JUE' THEN 4
+                    WHEN dia = 'VIE' THEN 5
+                    WHEN dia = 'SAB' THEN 6
+                END
+            ")
+            ->orderBy('hora_inicio');
+        })
+        ->paginate(10);
+
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'Consulta de horarios como docente',
+            'Horario',
+            null,
+            auth()->id(),
+            $request,
+            "Docente consultó listado de sus horarios"
+        );
+
+        return view('docente.horarios.index', compact('horarios', 'docente'));
+    }
+
+    /**
+     * Mostrar horario semanal del docente actual
+     */
+    public function miHorario(Request $request)
+    {
+        // Obtener el docente actual - CORREGIDO
+        $docente = Docente::where('id_users', auth()->id())->first();
+        
+        if (!$docente) {
+            // Si no hay docente asociado, mostrar vista informativa
+            return view('docente.horarios.sin-docente', [
+                'message' => 'No se encontró un perfil de docente asociado a tu usuario. Contacta con administración.'
+            ]);
+        }
+
+        // Obtener horarios del docente
+        $horarios = GrupoMateriaHorario::with([
+            'horario',
+            'grupoMateria.materia',
+            'grupoMateria.grupo',
+            'aula',
+            'docente.user' // Incluir la relación con usuario del docente
+        ])
+        ->where('id_docente', $docente->codigo)
+        ->where('estado_aula', 'ocupado')
+        ->orderByRaw("
+            CASE 
+                WHEN horario.dia = 'LUN' THEN 1
+                WHEN horario.dia = 'MAR' THEN 2
+                WHEN horario.dia = 'MIE' THEN 3
+                WHEN horario.dia = 'JUE' THEN 4
+                WHEN horario.dia = 'VIE' THEN 5
+                WHEN horario.dia = 'SAB' THEN 6
+            END,
+            horario.hora_inicio
+        ")
+        ->get();
+
+        // Agrupar por día para la vista
+        $horariosPorDia = $horarios->groupBy(function($item) {
+            return $item->horario->dia;
+        });
+
+        // Días de la semana en orden
+        $diasOrdenados = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'Consulta de horario personal',
+            'Horario',
+            null,
+            auth()->id(),
+            $request,
+            "Docente consultó su horario personal"
+        );
+
+        return view('docente.horarios.mi-horario', compact(
+            'horarios',
+            'horariosPorDia',
+            'diaOrdenados',
+            'docente'
+        ));
+    }
 }

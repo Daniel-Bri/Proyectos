@@ -82,6 +82,60 @@
                         </div>
                     </div>
 
+                    <!-- Campos de Contraseña -->
+                    <div class="mb-6">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-lock mr-2 text-[#3CA6A6] text-lg"></i>
+                            <h4 class="text-lg font-bold text-deep-teal-800">
+                                Cambiar Contraseña
+                            </h4>
+                        </div>
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 mb-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-info-circle text-blue-500 text-lg mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-blue-600">
+                                        Deje estos campos en blanco si no desea cambiar la contraseña.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Nueva Contraseña -->
+                            <div>
+                                <label for="password" class="block text-sm font-bold text-deep-teal-800 mb-2">
+                                    <i class="fas fa-key mr-2 text-[#3CA6A6]"></i>
+                                    Nueva Contraseña
+                                </label>
+                                <input type="password" 
+                                       class="w-full px-4 py-3 border border-deep-teal-200 rounded-xl bg-deep-teal-25 placeholder-deep-teal-400 text-deep-teal-800 focus:outline-none focus:ring-2 focus:ring-[#3CA6A6] focus:border-transparent transition-all duration-200 @error('password') border-red-500 @enderror" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Ingrese nueva contraseña">
+                                @error('password')
+                                    <div class="mt-2 text-sm text-red-600 flex items-center">
+                                        <i class="fas fa-exclamation-circle mr-2"></i>
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+
+                            <!-- Confirmar Contraseña -->
+                            <div>
+                                <label for="password_confirmation" class="block text-sm font-bold text-deep-teal-800 mb-2">
+                                    <i class="fas fa-key mr-2 text-[#3CA6A6]"></i>
+                                    Confirmar Contraseña
+                                </label>
+                                <input type="password" 
+                                       class="w-full px-4 py-3 border border-deep-teal-200 rounded-xl bg-deep-teal-25 placeholder-deep-teal-400 text-deep-teal-800 focus:outline-none focus:ring-2 focus:ring-[#3CA6A6] focus:border-transparent transition-all duration-200" 
+                                       id="password_confirmation" 
+                                       name="password_confirmation" 
+                                       placeholder="Confirme la nueva contraseña">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Roles -->
                     <div class="mb-6">
                         <label class="block text-sm font-bold text-deep-teal-800 mb-4">
@@ -109,19 +163,6 @@
                                 {{ $message }}
                             </div>
                         @enderror
-                    </div>
-
-                    <!-- Información de contraseña -->
-                    <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                        <div class="flex items-center">
-                            <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
-                            <div>
-                                <h4 class="text-sm font-bold text-blue-800">Información de Contraseña</h4>
-                                <p class="text-sm text-blue-600 mt-1">
-                                    Para cambiar la contraseña del usuario, utiliza la opción "Cambiar Contraseña" en la vista de detalles del usuario.
-                                </p>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Botones de acción -->
@@ -176,4 +217,27 @@
     background-color: rgba(1, 46, 64, 0.05);
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación de contraseñas coincidentes
+    const password = document.getElementById('password');
+    const passwordConfirmation = document.getElementById('password_confirmation');
+    
+    function validatePasswords() {
+        if (password.value && passwordConfirmation.value) {
+            if (password.value !== passwordConfirmation.value) {
+                passwordConfirmation.setCustomValidity('Las contraseñas no coinciden');
+            } else {
+                passwordConfirmation.setCustomValidity('');
+            }
+        } else {
+            passwordConfirmation.setCustomValidity('');
+        }
+    }
+    
+    password.addEventListener('input', validatePasswords);
+    passwordConfirmation.addEventListener('input', validatePasswords);
+});
+</script>
 @endsection

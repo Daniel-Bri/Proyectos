@@ -2,16 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Asistencias\AsistenciaController;
+use App\Http\Controllers\GestionAcademica\MateriaController;
+use App\Http\Controllers\GestionAcademica\DocenteController;
+use App\Http\Controllers\GestionDeHorarios\HorariosController;
 
 Route::prefix('docente')
     ->middleware(['auth', 'role:docente'])
     ->as('docente.')
     ->group(function () {
+        // Dashboard docente - REDIRIGIR AL DASHBOARD PRINCIPAL
         Route::get('/dashboard', function () {
-            return view('docente.dashboard');
+            return redirect('/dashboard'); // ← Redirige al dashboard principal
         })->name('dashboard');
 
-        // Módulo de Asistencia
+        // =========================================================================
+        // MÓDULO DE ASISTENCIA (TUS RUTAS)
+        // =========================================================================
         Route::prefix('asistencia')
             ->as('asistencia.')
             ->group(function () {
@@ -35,4 +41,25 @@ Route::prefix('docente')
                 // Historial
                 Route::get('/historial', [AsistenciaController::class, 'historial'])->name('historial');
             });
+
+        // =========================================================================
+        // GESTIÓN ACADÉMICA (RUTAS DE ALEJANDRA)
+        // =========================================================================
+        
+        // Materias del docente
+        Route::get('/materias', [MateriaController::class, 'index'])->name('materias.index');
+        Route::get('/materias/{materia}', [MateriaController::class, 'show'])->name('materias.show');
+        
+        // Horarios del docente
+        Route::get('/horarios', [HorariosController::class, 'indexDocente'])->name('horarios.index');
+        Route::get('/mi-horario', [HorariosController::class, 'miHorario'])->name('mi-horario'); 
+        
+        // Perfil del docente
+        Route::get('/perfil', [DocenteController::class, 'perfil'])->name('perfil');
+        
+        // Carga Horaria
+        Route::get('/carga-horaria', [DocenteController::class, 'miCargaHoraria'])->name('carga-horaria.index');
+
+        // Cambiar contraseña
+        Route::put('/cambiar-password', [DocenteController::class, 'cambiarPassword'])->name('cambiar-password');
     });

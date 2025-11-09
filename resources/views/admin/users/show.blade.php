@@ -33,6 +33,20 @@
                         <i class="fas fa-edit mr-2"></i>
                         Editar
                     </a>
+                    
+                    <!-- ✅ NUEVO: Botón eliminar en vista de detalles -->
+                    @can('admin')
+                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" 
+                                onclick="return confirm('¿Está seguro de eliminar este usuario? Se eliminarán también los datos relacionados (docente, etc.). Esta acción no se puede deshacer.')"
+                                class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white border border-transparent rounded-xl font-semibold text-xs uppercase tracking-widest transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                            <i class="fas fa-trash mr-2"></i>
+                            Eliminar
+                        </button>
+                    </form>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -246,18 +260,70 @@
                         </div>
                         
                         <div class="space-y-3">
-                            <!-- SOLO ESTOS BOTONES - SIN VERIFICAR EMAIL -->
+                            <!-- Botón Editar -->
                             <a href="{{ route('admin.users.edit', $user) }}" 
                                class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 group">
                                 <i class="fas fa-edit mr-3 group-hover:scale-110 transition-transform duration-200"></i>
                                 Editar Usuario
                             </a>
                             
+                            <!-- Botón Ver Todos -->
                             <a href="{{ route('admin.users.index') }}" 
                                class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 group">
                                 <i class="fas fa-users mr-3 group-hover:scale-110 transition-transform duration-200"></i>
                                 Ver Todos los Usuarios
                             </a>
+                            
+                            <!-- ✅ NUEVO: Botón Eliminar en Acciones Rápidas -->
+                            @can('admin')
+                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="w-full">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" 
+                                        onclick="return confirm('¿Está seguro de eliminar este usuario? Se eliminarán también los datos relacionados (docente, etc.). Esta acción no se puede deshacer.')"
+                                        class="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 group">
+                                    <i class="fas fa-trash mr-3 group-hover:scale-110 transition-transform duration-200"></i>
+                                    Eliminar Usuario
+                                </button>
+                            </form>
+                            @endcan
+                        </div>
+                    </div>
+
+                    <!-- Información Adicional -->
+                    <div class="bg-white rounded-2xl p-6 border border-deep-teal-100 shadow-lg">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-md mr-4">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <h4 class="text-xl font-bold text-deep-teal-800">
+                                Información Adicional
+                            </h4>
+                        </div>
+                        
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between items-center py-2 border-b border-deep-teal-100">
+                                <span class="text-deep-teal-600 font-medium">Última Actualización</span>
+                                <span class="text-deep-teal-800 font-bold">{{ $user->updated_at->format('d/m/Y H:i') }}</span>
+                            </div>
+                            @if($user->email_verified_at)
+                            <div class="flex justify-between items-center py-2 border-b border-deep-teal-100">
+                                <span class="text-deep-teal-600 font-medium">Email Verificado</span>
+                                <span class="text-deep-teal-800 font-bold">{{ $user->email_verified_at->format('d/m/Y H:i') }}</span>
+                            </div>
+                            @endif
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-deep-teal-600 font-medium">Roles Asignados</span>
+                                <span class="text-deep-teal-800 font-bold">{{ $user->roles->count() }}</span>
+                            </div>
+                            
+                            <!-- ✅ NUEVO: Información de Docente Relacionado -->
+                            @if($user->docente)
+                            <div class="flex justify-between items-center py-2 border-t border-deep-teal-100 mt-2 pt-2">
+                                <span class="text-deep-teal-600 font-medium">Docente Relacionado</span>
+                                <span class="text-deep-teal-800 font-bold">{{ $user->docente->codigo }}</span>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>

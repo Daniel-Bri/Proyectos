@@ -3,11 +3,20 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GestionAcademica\AulaController;
 use App\Http\Controllers\Administracion\BitacoraController;
+<<<<<<< HEAD
 use App\Http\Controllers\RolController;
 use App\Http\Controllers\DocenteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\Administracion\CargaMasivaUsuariosController;
+=======
+use App\Http\Controllers\Administracion\RolController;
+use App\Http\Controllers\Administracion\UserController;
+use App\Http\Controllers\GestionAcademica\DocenteController;
+use App\Http\Controllers\GestionAcademica\MateriaController;
+use App\Http\Controllers\GestionDeHorarios\HorariosController;
+use App\Http\Controllers\GestionAcademica\GrupoController;
+>>>>>>> Alejandra
 
 // Panel administrativo (solo usuarios con rol “admin”)
 Route::prefix('admin')
@@ -15,6 +24,26 @@ Route::prefix('admin')
     ->as('admin.')
     ->group(function () {
 
+        
+        // ✅ RUTAS DE GRUPOS PARA ADMIN (NUEVAS)
+        Route::prefix('grupos')->name('grupos.')->group(function () {
+            // Rutas CRUD básicas
+            Route::get('/', [GrupoController::class, 'index'])->name('index');
+            Route::get('/crear', [GrupoController::class, 'create'])->name('create');
+            Route::post('/', [GrupoController::class, 'store'])->name('store');
+            Route::get('/{id}', [GrupoController::class, 'show'])->name('show');
+            Route::get('/{id}/editar', [GrupoController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [GrupoController::class, 'update'])->name('update');
+            Route::delete('/{id}', [GrupoController::class, 'destroy'])->name('destroy');
+            
+            // Asignación de materias
+            Route::get('/{id}/asignar-materias', [GrupoController::class, 'asignarMaterias'])->name('asignar-materias');
+            Route::post('/{id}/asignar-materias', [GrupoController::class, 'storeAsignarMaterias'])->name('store-asignar-materias');
+            Route::delete('/{idGrupo}/materia/{siglaMateria}', [GrupoController::class, 'removerMateria'])->name('remover-materia');
+            
+            // Exportación
+            Route::get('/exportar/excel', [GrupoController::class, 'export'])->name('export');
+        });
         // ✅ RUTAS DE AULAS PARA ADMIN (CORREGIDAS)
         Route::prefix('aulas')->name('aulas.')->group(function () {
             Route::get('/', [AulaController::class, 'index'])->name('index');
@@ -31,6 +60,7 @@ Route::prefix('admin')
 
         // ✅ RUTAS DE MATERIAS PARA ADMIN
         Route::prefix('materias')->name('materias.')->group(function () {
+            // Rutas CRUD básicas
             Route::get('/', [MateriaController::class, 'index'])->name('index');
             Route::get('/create', [MateriaController::class, 'create'])->name('create');
             Route::post('/', [MateriaController::class, 'store'])->name('store');
@@ -39,12 +69,12 @@ Route::prefix('admin')
             Route::put('/{sigla}', [MateriaController::class, 'update'])->name('update');
             Route::delete('/{sigla}', [MateriaController::class, 'destroy'])->name('destroy');
             
-            // Agregar esta ruta para exportación
+            // Exportación
             Route::get('/export', [MateriaController::class, 'export'])->name('export');
-
-            // Asignación de Grupos
-            Route::get('/{sigla}/asignar-grupo', [MateriaController::class, 'asignarGrupo'])->name('asignar-grupo');
-            Route::post('/{sigla}/asignar-grupo', [MateriaController::class, 'storeAsignarGrupo'])->name('store-asignar-grupo');
+            
+            // Gestión de Aulas
+            Route::get('/{sigla}/asignar-aulas', [MateriaController::class, 'asignarAulas'])->name('asignar-aulas');
+            Route::post('/{sigla}/store-asignar-aulas', [MateriaController::class, 'storeAsignarAulas'])->name('store-asignar-aulas');
             
             // Horarios y APIs
             Route::get('/{sigla}/horarios', [MateriaController::class, 'horarios'])->name('horarios');
@@ -100,4 +130,9 @@ Route::prefix('admin')
         Route::post('/users/{user}/password', [UserController::class, 'updatePassword'])->name('users.update-password');
         Route::post('/users/{user}/verification', [UserController::class, 'updateVerification'])->name('users.update-verification');
         Route::post('/users/{user}/generate-token', [UserController::class, 'generateTemporalToken'])->name('users.generate-token');
+
+        // horarios - GESTIÓN DE HORARIOS PARA ADMIN
+        Route::get('/horarios/asignar', [HorariosController::class, 'asignar'])->name('horarios.asignar');
+        Route::post('/horarios/asignar', [HorariosController::class, 'storeAsignacion'])->name('horarios.store-asignacion');
+        Route::resource('/horarios', HorariosController::class);
     });

@@ -9,7 +9,8 @@ class Asistencia extends Model
 {
     use HasFactory;
 
-    protected $table = 'asistencias';
+    // CORREGIDO: La tabla se llama 'asistencia' en singular
+    protected $table = 'asistencia';
     
     protected $fillable = [
         'fecha',
@@ -23,10 +24,23 @@ class Asistencia extends Model
         'hora_registro' => 'datetime'
     ];
 
-    // Nueva relación
+    // Relación con GrupoMateriaHorario
     public function grupoMateriaHorario()
     {
         return $this->belongsTo(GrupoMateriaHorario::class, 'id_grupo_materia_horario');
+    }
+
+    // Relación indirecta con GrupoMateria a través de GrupoMateriaHorario
+    public function grupoMateria()
+    {
+        return $this->hasOneThrough(
+            GrupoMateria::class,
+            GrupoMateriaHorario::class,
+            'id', // Foreign key on GrupoMateriaHorario table
+            'id', // Foreign key on GrupoMateria table  
+            'id_grupo_materia_horario', // Local key on Asistencia table
+            'id_grupo_materia' // Local key on GrupoMateriaHorario table
+        );
     }
 
     // Scope para búsquedas por fecha
@@ -40,5 +54,4 @@ class Asistencia extends Model
     {
         return $query->where('estado', $estado);
     }
-    
 }

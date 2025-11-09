@@ -40,7 +40,7 @@ class GrupoMateriaHorario extends Model
     // Relación con Docente (VERSIÓN CORREGIDA - usa 'id_docente')
     public function docente()
     {
-        return $this->belongsTo(Docente::class, 'id_docente', 'codigo');
+        return $this->belongsTo(Docente::class,  'id_docente', 'codigo');
     }
 
     // Relación con Asistencias (de Daniel)

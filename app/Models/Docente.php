@@ -50,28 +50,34 @@ class Docente extends Model
         return $this->hasMany(Asistencia::class, 'codigo_docente', 'codigo');
     }
 
-    // CORREGIR: Esta relación no funciona sin tabla intermedia
-    // public function materias()
-    // {
-    //     return $this->hasManyThrough(Materia::class, DocenteCarrera::class, 'docente_codigo', 'carrera_id', 'codigo', 'carrera_id');
-    // }
-
-    // NUEVA: Relación con GrupoMateriaHorario
-    public function grupoMateriaHorarios()
+    // CORREGIDO: Usar id_docente (confirmado por el modelo GrupoMateriaHorario)
+    public function horarios()
     {
-        return $this->hasMany(GrupoMateriaHorario::class, 'codigo_docente', 'codigo');
+        return $this->hasMany(GrupoMateriaHorario::class, 'id_docente', 'codigo');
     }
 
-    // Relación con GruposMateria a través de horarios
-    public function gruposMateria()
+    // NUEVO: Método corregido para obtener materias asignadas
+    public function materiasAsignadas()
     {
-        return $this->hasManyThrough(
-            GrupoMateria::class,
-            GrupoMateriaHorario::class,
-            'codigo_docente', // Foreign key on GrupoMateriaHorario
-            'id', // Foreign key on GrupoMateria  
-            'codigo', // Local key on Docente
-            'id_grupo_materia' // Local key on GrupoMateriaHorario
-        );
+        return Materia::whereHas('grupoMaterias.horarios', function($query) {
+            $query->where('id_docente', $this->codigo);
+        })
+        ->with([
+            'categoria:id,nombre',
+            'grupoMaterias' => function($query) {
+                $query->whereHas('horarios', function($q) {
+                    $q->where('id_docente', $this->codigo);
+                })->with([
+                    'grupo',
+                    'gestion',
+                    'horarios' => function($q) {
+                        $q->where('id_docente', $this->codigo)
+                          ->with(['horario', 'aula']);
+                    }
+                ]);
+            }
+        ])
+        ->orderBy('sigla')
+        ->get();
     }
 }
