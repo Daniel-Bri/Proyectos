@@ -11,8 +11,8 @@ class MateriaSeeder extends Seeder
     {
         $materias = [
             [
-                'sigla' => 'INF110',
-                'nombre' => 'Introducción a la Informática',
+                'sigla' => 'ADM100',
+                'nombre' => 'ADMINISTRACION',
                 'semestre' => 1,
                 'id_categoria' => 1,
             ],

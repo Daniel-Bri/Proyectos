@@ -66,7 +66,7 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('coordinador.horarios.create') }}"
+                    <a href="{{ route('coordinador.horarios.create-base') }}"
                        class="inline-flex items-center gap-2 bg-cream-200 text-deep-teal-700 px-4 py-2 rounded-lg font-medium hover:bg-cream-300 transition shadow-md">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -277,6 +277,38 @@
                                     <p class="text-red-300 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
+                        </div>
+
+                        <!-- INFORMACIÓN DE GESTIÓN ACTIVA -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-cream-300">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Gestión Académica
+                            </label>
+                            <div class="bg-deep-teal-500 border border-deep-teal-400 rounded-lg p-4">
+                                <div class="flex items-center justify-between text-cream-200">
+                                    <div>
+                                        <div class="font-semibold">{{ $gestionActiva->nombre }}</div>
+                                        <div class="text-cream-300 text-sm">
+                                            {{ \Carbon\Carbon::parse($gestionActiva->fecha_inicio)->format('d/m/Y') }} - 
+                                            {{ \Carbon\Carbon::parse($gestionActiva->fecha_fin)->format('d/m/Y') }}
+                                        </div>
+                                        <div class="text-cream-400 text-xs mt-1">
+                                            Estado: <span class="font-medium capitalize">{{ $gestionActiva->estado }}</span>
+                                        </div>
+                                    </div>
+                                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <!-- CAMPO OCULTO PARA EL FORMULARIO -->
+                            <input type="hidden" name="id_gestion" value="{{ $gestionActiva->id }}">
+                            @error('id_gestion')
+                                <p class="text-red-300 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- ESTADO DEL AULA -->

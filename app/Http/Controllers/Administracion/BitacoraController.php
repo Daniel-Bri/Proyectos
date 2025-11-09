@@ -91,22 +91,33 @@ class BitacoraController extends Controller
     }
 
     // Método estático para registrar acciones en la bitácora
+    // En BitacoraController.php - CORREGIR el método registrar
     public static function registrar($accion, $entidad, $entidad_id = null, $usuario_id = null, $request = null, $detalles_extra = null)
     {
-        $req = $request ?? request();
-        
-        $auditoria = Auditoria::create([
-            'id_users'   => $usuario_id ?? (auth()->check() ? auth()->id() : null),
-            'accion'     => $accion,
-            'entidad'    => $entidad,
-            'entidad_id' => $entidad_id,
-            'ip'         => self::obtenerIpReal($req),
-            'user_agent' => self::formatearUserAgent($req->userAgent()),
-            'descripcion' => $detalles_extra,
-            'created_at' => now(),
-        ]);
+        try {
+            $req = $request ?? request();
+            
+            // SOLUCIÓN: Si no hay usuario autenticado, usar un ID por defecto para logs del sistema
+            $usuarioId = $usuario_id ?? (auth()->check() ? auth()->id() : 1);
+            
+            $auditoria = Auditoria::create([
+                'id_users'   => $usuarioId,
+                'accion'     => $accion,
+                'entidad'    => $entidad,
+                'entidad_id' => $entidad_id,
+                'ip'         => self::obtenerIpReal($req),
+                'user_agent' => self::formatearUserAgent($req->userAgent()),
+                'descripcion' => $detalles_extra,
+                'created_at' => now(),
+            ]);
 
-        return $auditoria;
+            return $auditoria;
+            
+        } catch (\Exception $e) {
+            // Si hay error, solo logear pero no romper la aplicación
+            \Log::error('Error en bitácora: ' . $e->getMessage());
+            return null;
+        }
     }
 
     // Métodos helper para acciones comunes del sistema

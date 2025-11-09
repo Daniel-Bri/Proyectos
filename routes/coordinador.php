@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\GestionDeHorarios\HorariosController;
 use App\Http\Controllers\GestionDeHorarios\AsignacionAutomaticaController;
-use App\Http\Controllers\AnalisisYReportes\ReportesAulasController;
+use App\Http\Controllers\AnalisisYReportes\ReporteAulasController;
 
 Route::prefix('coordinador')
     ->middleware(['auth', 'role:coordinador'])
@@ -41,14 +41,24 @@ Route::prefix('coordinador')
         });
 
         // =========================================================================
-        // GESTIÓN DE HORARIOS - COORDINADOR (TUS RUTAS NUEVAS)
+        // GESTIÓN DE HORARIOS - COORDINADOR (RUTAS CORREGIDAS)
         // =========================================================================
-        // Rutas específicas DEBEN IR ANTES del resource
-        Route::get('/horarios/asignar', [HorariosController::class, 'asignar'])->name('horarios.asignar');
-        Route::post('/horarios/asignar', [HorariosController::class, 'store'])->name('horarios.store');
-        
-        // Resource DEBE IR DESPUÉS de las rutas específicas
-        Route::resource('/horarios', HorariosController::class);
+        Route::prefix('horarios')->name('horarios.')->group(function () {
+            // CREAR HORARIO BASE (sin asignación)
+            Route::get('/create-base', [HorariosController::class, 'create'])->name('create-base');
+            Route::post('/store-base', [HorariosController::class, 'store'])->name('store-base');
+            
+            // ASIGNAR HORARIO EXISTENTE
+            Route::get('/asignar', [HorariosController::class, 'asignar'])->name('asignar');
+            Route::post('/store-asignacion', [HorariosController::class, 'storeAsignacion'])->name('store-asignacion');
+            
+            // CRUD PARA HORARIOS ASIGNADOS
+            Route::get('/', [HorariosController::class, 'index'])->name('index');
+            Route::get('/{id}', [HorariosController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [HorariosController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [HorariosController::class, 'update'])->name('update');
+            Route::delete('/{id}', [HorariosController::class, 'destroy'])->name('destroy');
+        });
 
         // =========================================================================
         // ASIGNACIÓN AUTOMÁTICA DE HORARIOS - NUEVAS RUTAS
@@ -59,16 +69,19 @@ Route::prefix('coordinador')
             Route::post('/inteligente', [AsignacionAutomaticaController::class, 'asignacionInteligente'])->name('inteligente');
         });
 
+        // =========================================================================
+        // REPORTES - RUTAS CORREGIDAS
+        // =========================================================================
         Route::prefix('reportes')->name('reportes.')->group(function () {
             Route::prefix('aulas')->name('aulas.')->group(function () {
                 // Vista principal
-                Route::get('/disponibles', [\App\Http\Controllers\AnalisisYReportes\ReporteAulasController::class, 'index'])->name('disponibles');
+                Route::get('/disponibles', [ReporteAulasController::class, 'index'])->name('disponibles');
                 
                 // Generar reporte
-                Route::post('/disponibles/generar', [\App\Http\Controllers\AnalisisYReportes\ReporteAulasController::class, 'generarReporte'])->name('disponibles.generar');
+                Route::post('/disponibles/generar', [ReporteAulasController::class, 'generarReporte'])->name('disponibles.generar');
                 
                 // Exportar PDF
-                Route::get('/disponibles/pdf', [\App\Http\Controllers\AnalisisYReportes\ReporteAulasController::class, 'generarPDF'])->name('disponibles.pdf');
+                Route::get('/disponibles/pdf', [ReporteAulasController::class, 'generarPDF'])->name('disponibles.pdf');
             });
         });
     });

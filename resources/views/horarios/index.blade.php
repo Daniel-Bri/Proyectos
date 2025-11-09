@@ -83,27 +83,21 @@
             <div class="gradient-card rounded-xl p-6 shadow-lg">
                 <div class="flex flex-col sm:flex-row gap-4">
                     <!-- BOTÓN CREAR HORARIO -->
-                    <a href="{{ route('coordinador.horarios.create') }}"
-                       class="flex-1 bg-cream-200 text-deep-teal-700 px-6 py-4 rounded-lg font-semibold hover:bg-cream-300 transition shadow-md flex items-center justify-center gap-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('coordinador.horarios.create-base') }}"
+                    class="inline-flex items-center gap-2 bg-cream-200 text-deep-teal-700 px-4 py-2 rounded-lg font-medium hover:bg-cream-300 transition shadow-md">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
-                        <div class="text-left">
-                            <div class="text-lg">Crear Horario</div>
-                            <div class="text-sm opacity-75">Nuevo bloque horario</div>
-                        </div>
+                        Crear Nuevo Horario Base
                     </a>
 
                     <!-- BOTÓN ASIGNAR HORARIO -->
                     <a href="{{ route('coordinador.horarios.asignar') }}"
-                       class="flex-1 bg-deep-teal-400 text-cream-200 px-6 py-4 rounded-lg font-semibold hover:bg-deep-teal-300 transition shadow-md flex items-center justify-center gap-3 border border-deep-teal-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex items-center gap-2 bg-deep-teal-600 text-cream-200 px-4 py-2 rounded-lg font-medium hover:bg-deep-teal-500 transition shadow-md border border-deep-teal-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <div class="text-left">
-                            <div class="text-lg">Asignar Horario</div>
-                            <div class="text-sm opacity-75">A grupo y docente</div>
-                        </div>
+                        Asignar Horario Existente
                     </a>
                 </div>
             </div>

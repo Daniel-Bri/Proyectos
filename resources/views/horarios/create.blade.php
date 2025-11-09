@@ -97,7 +97,8 @@
                     Información del Horario Base
                 </h2>
 
-                <form action="{{ route('coordinador.horarios.store') }}" method="POST">
+                <!-- CORREGIDO: Usar store-base en lugar de store -->
+                <form action="{{ route('coordinador.horarios.store-base') }}" method="POST">
                     @csrf
 
                     <div class="space-y-6">
@@ -154,28 +155,6 @@
                                     <p class="text-red-300 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                        </div>
-
-                        <!-- GESTIÓN (si es necesario) -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-cream-300">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Gestión *
-                            </label>
-                            <select name="id_gestion" required
-                                    class="w-full bg-deep-teal-600 text-cream-200 rounded-lg border border-deep-teal-400 p-3 focus:ring-2 focus:ring-cream-200 focus:border-transparent">
-                                <option value="" class="bg-deep-teal-700">Seleccionar gestión</option>
-                                @foreach($gestiones as $gestion)
-                                    <option value="{{ $gestion->id }}" {{ old('id_gestion') == $gestion->id ? 'selected' : '' }} class="bg-deep-teal-700">
-                                        {{ $gestion->nombre }} ({{ $gestion->anio }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('id_gestion')
-                                <p class="text-red-300 text-sm mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
 
                         <!-- DESCRIPCIÓN OPCIONAL -->
