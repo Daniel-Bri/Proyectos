@@ -26,7 +26,7 @@ class MateriaSeeder extends Seeder
                 'sigla' => 'INF210',
                 'nombre' => 'Programación II', 
                 'semestre' => 2,
-                'id_categoria' => 1,
+                'id_categoria' => 2,
             ],
             [
                 'sigla' => 'INF119',
