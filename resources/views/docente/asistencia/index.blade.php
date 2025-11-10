@@ -217,7 +217,9 @@
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <div class="flex flex-wrap items-center gap-4 text-sm">
                             @php
-                                $estadoClase = $clase->getEstadoClase();
+                                // CORREGIDO: Usar las propiedades que vienen del controlador
+                                $estadoClase = $clase->estado_clase;
+                                $tiempoRestante = $clase->tiempo_restante;
                                 $badgeColors = [
                                     'disponible' => 'bg-green-100 text-green-800',
                                     'proximo' => 'bg-blue-100 text-blue-800',
@@ -226,11 +228,16 @@
                                 ];
                             @endphp
                             <span class="px-3 py-1 rounded-full font-medium {{ $badgeColors[$estadoClase] ?? 'bg-gray-100 text-gray-800' }}">
-                                {{ ucfirst($estadoClase) }}
+                                {{ ucfirst(str_replace('_', ' ', $estadoClase)) }}
                             </span>
                             <span class="text-gray-600">
-                                Tiempo restante: <span class="font-medium">{{ $clase->getTiempoRestante() }}</span>
+                                Tiempo restante: <span class="font-medium">{{ $tiempoRestante }}</span>
                             </span>
+                            @if($clase->asistencia_registrada)
+                            <span class="px-3 py-1 rounded-full font-medium bg-green-100 text-green-800">
+                                Asistencia registrada
+                            </span>
+                            @endif
                         </div>
                     </div>
                 </div>

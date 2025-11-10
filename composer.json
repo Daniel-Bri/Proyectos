@@ -13,6 +13,7 @@
         "laravel/ui": "^4.6",
         "livewire/volt": "*",
         "maatwebsite/excel": "^1.1",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.21"
     },
     "require-dev": {
