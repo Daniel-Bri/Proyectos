@@ -59,6 +59,10 @@ Route::prefix('docente')
         
         // Carga Horaria
         Route::get('/carga-horaria', [DocenteController::class, 'miCargaHoraria'])->name('carga-horaria.index');
+        
+        Route::put('/change-password', [DocenteController::class, 'cambiarPassword'])
+    ->middleware(['auth'])
+    ->name('password.change');
 
         // Cambiar contraseña
         Route::put('/cambiar-password', [DocenteController::class, 'cambiarPassword'])->name('cambiar-password');
