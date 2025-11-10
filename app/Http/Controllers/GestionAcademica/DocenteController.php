@@ -752,40 +752,44 @@ class DocenteController extends Controller
         return view('docente.perfil', compact('docente'));
     }
 
-    public function cambiarPassword(Request $request)
-    {
-        $user = Auth::user();
-        
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
-        ]);
+public function cambiarPassword(Request $request)
+{
+    $user = Auth::user();
+    
+    $validator = Validator::make($request->all(), [
+        'current_password' => 'required',
+        'new_password' => 'required|min:8|confirmed',
+    ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->with('error', 'Por favor corrige los errores en el formulario.');
-        }
+    if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->with('error', 'Por favor corrige los errores en el formulario.');
+    }
 
-        // Verificar contraseña actual
-        if (!Hash::check($request->current_password, $user->password)) {
-            // Registrar intento fallido en bitácora
-            BitacoraController::registrar('Intento Fallido', 'Usuario', $user->id, $user->id, null, 'Intento fallido de cambio de contraseña (contraseña actual incorrecta)');
-            
-            return redirect()->back()
-                ->with('error', 'La contraseña actual es incorrecta.');
-        }
+    // Verificar contraseña actual
+    if (!Hash::check($request->current_password, $user->password)) {
+        return redirect()->back()
+            ->with('error', 'La contraseña actual es incorrecta.');
+    }
 
-        // Actualizar contraseña
-        $user->password = Hash::make($request->new_password);
-        $user->save();
+    // Actualizar contraseña
+    $user->password = Hash::make($request->new_password);
+    $user->password_set = true;
+    $user->save();
 
-        // Registrar en bitácora
-        BitacoraController::registrarActualizacion('Usuario', $user->id, $user->id, 'Cambió su contraseña');
+    // Registrar en bitácora si tienes este sistema
+     BitacoraController::registrarActualizacion('Usuario', $user->id, $user->id, 'Cambió su contraseña');
 
+    // Redirigir según el rol
+    if ($user->hasRole('docente')) {
         return redirect()->route('docente.perfil')
             ->with('success', 'Contraseña actualizada exitosamente.');
+    } else {
+        return redirect()->route('dashboard')
+            ->with('success', 'Contraseña actualizada exitosamente.');
     }
+}
 
     // =============================================
     // MÉTODOS AUXILIARES PARA BITÁCORA

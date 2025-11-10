@@ -308,10 +308,10 @@
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
-                        <a href="{{ route('password.change') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
-                            <i class="fas fa-lock mr-2 w-4 h-4"></i>
-                            Cambiar Contraseña
-                        </a>
+<a href="{{ route('password.change') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+    <i class="fas fa-lock mr-2 w-4 h-4"></i>
+    Cambiar Contraseña
+</a>
                     </div>
                 </div>
             </nav>
@@ -496,7 +496,7 @@
                             <p class="font-semibold">Reportes Aulas</p>
                         </a>
                         @elseif(auth()->user()->hasRole('docente'))
-                        <!-- Acciones para Docente -->
+                        <!-- Acciones para Docente - ACTUALIZADO CON CARGA HORARIA -->
                         <a href="{{ route('docente.materias.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
                             <i class="fas fa-book text-2xl mb-2"></i>
                             <p class="font-semibold">Mis Materias</p>
@@ -509,9 +509,10 @@
                             <i class="fas fa-clipboard-check text-2xl mb-2"></i>
                             <p class="font-semibold">Registrar Asistencia</p>
                         </a>
-                        <a href="{{ route('password.change') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
-                            <i class="fas fa-lock text-2xl mb-2"></i>
-                            <p class="font-semibold">Cambiar Contraseña</p>
+                        <!-- NUEVA ACCIÓN: CARGA HORARIA -->
+                        <a href="{{ route('docente.carga-horaria.index') }}" class="bg-cream hover:bg-light-teal hover:text-white text-deep-teal rounded-lg p-4 text-center transition-colors">
+                            <i class="fas fa-clock text-2xl mb-2"></i>
+                            <p class="font-semibold">Mi Carga Horaria</p>
                         </a>
                         @endif
                     @endauth
