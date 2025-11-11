@@ -17,6 +17,12 @@
                 </p>
             </div>
             <div class="flex flex-wrap gap-3">
+                                <!-- Botón Volver al Dashboard - PARTE SUPERIOR DERECHA -->
+                <a href="{{ route('dashboard') }}" 
+                   class="inline-flex items-center justify-center px-4 py-2 bg-[#F2E3D5] hover:bg-[#e6d7c9] text-deep-teal-800 font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver al Dashboard
+                </a>
                 @can('admin')
                 <a href="{{ route('docentes.create') }}" 
                    class="inline-flex items-center px-4 py-2 bg-[#3CA6A6] hover:bg-[#026773] border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">

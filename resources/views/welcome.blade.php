@@ -186,7 +186,7 @@
 
         @auth
             <div class="user-welcome">
-                <p>Bienvenido, <strong>{{ Auth::user()->nombre }}</strong></p>
+                <p>Bienvenido, <strong>{{ auth()->user()->name}}</strong></p>
             </div>
             
             <div class="btn-container">
