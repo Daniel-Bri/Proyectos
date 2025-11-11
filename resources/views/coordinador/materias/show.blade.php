@@ -19,16 +19,8 @@
                 </div>
                 <div class="flex flex-wrap gap-3">
                     {{-- ✅ RUTAS CORREGIDAS --}}
-                    <a href="{{ route('coordinador.materias.edit', $materia->sigla) }}" 
-                       class="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                        <i class="fas fa-edit mr-2"></i>
-                        Editar
-                    </a>
-                    <a href="{{ route('coordinador.materias.asignar-grupo', $materia->sigla) }}" 
-                       class="inline-flex items-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                        <i class="fas fa-users mr-2"></i>
-                        Gestionar Grupos
-                    </a>
+
+
                     <a href="{{ route('coordinador.materias.index') }}" 
                        class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-xl font-semibold text-xs uppercase tracking-widest transition-all duration-200 backdrop-blur-sm">
                         <i class="fas fa-arrow-left mr-2"></i>
@@ -269,11 +261,7 @@
                 <h4 class="text-xl font-bold text-gray-700 mb-2">Programación pendiente</h4>
                 <p class="text-gray-600 mb-4">Esta materia necesita grupos y horarios asignados.</p>
                 {{-- ✅ RUTA CORREGIDA --}}
-                <a href="{{ route('coordinador.materias.asignar-grupo', $materia->sigla) }}" 
-                   class="inline-flex items-center px-6 py-3 bg-[#3CA6A6] hover:bg-[#026773] text-white font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    <i class="fas fa-calendar-plus mr-2"></i>
-                    Programar Grupos
-                </a>
+
             </div>
             @endif
         </div>

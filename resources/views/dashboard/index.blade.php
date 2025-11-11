@@ -291,6 +291,19 @@
                         <i class="fas fa-chevron-down text-xs transition-transform"></i>
                     </button>
                     <div class="submenu ml-6">
+                                <!-- Reporte de Horarios Semanales -->
+        <a href="{{ route('admin.reportes.horarios-semanales.index') }}" 
+           class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+            <i class="fas fa-calendar-week mr-2 w-4 h-4"></i>
+            Horarios Semanales
+        </a>
+        
+        <!-- Reporte de Asistencia -->
+        <a href="{{ route('admin.reportes.asistencia.index') }}" 
+           class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
+            <i class="fas fa-user-check mr-2 w-4 h-4"></i>
+            Reporte de Asistencia
+        </a>
                         <a href="{{ route('coordinador.reportes.aulas.disponibles') }}" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-light-teal hover:bg-opacity-20 rounded truncate flex items-center">
                             <i class="fas fa-door-open mr-2 w-4 h-4"></i>
                             Aulas Disponibles
@@ -545,6 +558,156 @@
                     </div>
                 </div>
             </div>
+            <!-- Alertas del Sistema -->
+@if(isset($alertas) && count($alertas) > 0)
+<div class="bg-white rounded-xl p-6 shadow-lg mb-8">
+    <h3 class="text-xl font-bold text-deep-teal mb-4 flex items-center">
+        <i class="fas fa-bell mr-3 text-yellow-500"></i>
+        Alertas del Sistema
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach($alertas as $alerta)
+        <div class="border-l-4 border-{{ $alerta['color'] }}-500 bg-{{ $alerta['color'] }}-50 p-4 rounded-lg">
+            <div class="flex items-start space-x-3">
+                <span class="text-2xl mt-1">{{ $alerta['icono'] }}</span>
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-900">{{ $alerta['titulo'] }}</h4>
+                    <p class="text-gray-600 text-sm mt-1">{{ $alerta['mensaje'] }}</p>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
+<!-- Métricas de Asistencia en Tiempo Real -->
+<div class="bg-white rounded-xl p-6 shadow-lg mb-8">
+    <h3 class="text-xl font-bold text-deep-teal mb-4 flex items-center">
+        <i class="fas fa-chart-line mr-3 text-green-500"></i>
+        Métricas de Asistencia - Hoy
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Asistencias Hoy -->
+        <div class="text-center p-4 border border-green-200 rounded-lg bg-green-50">
+            <i class="fas fa-user-check text-2xl text-green-600 mb-2"></i>
+            <p class="text-2xl font-bold text-deep-teal">{{ $stats['asistencias_hoy'] ?? 0 }}</p>
+            <p class="text-sm text-dark-teal">Asistencias Hoy</p>
+        </div>
+        
+        <!-- Porcentaje Asistencia -->
+        <div class="text-center p-4 border border-blue-200 rounded-lg bg-blue-50">
+            <i class="fas fa-percentage text-2xl text-blue-600 mb-2"></i>
+            <p class="text-2xl font-bold text-deep-teal">{{ $stats['porcentaje_asistencia_hoy'] ?? 0 }}%</p>
+            <p class="text-sm text-dark-teal">Tasa de Asistencia</p>
+        </div>
+        
+        <!-- Docentes Activos -->
+        <div class="text-center p-4 border border-purple-200 rounded-lg bg-purple-50">
+            <i class="fas fa-chalkboard-teacher text-2xl text-purple-600 mb-2"></i>
+            <p class="text-2xl font-bold text-deep-teal">{{ $stats['docentes_activos_hoy'] ?? 0 }}</p>
+            <p class="text-sm text-dark-teal">Docentes Activos</p>
+        </div>
+        
+        <!-- Clases Programadas -->
+        <div class="text-center p-4 border border-orange-200 rounded-lg bg-orange-50">
+            <i class="fas fa-calendar-check text-2xl text-orange-600 mb-2"></i>
+            <p class="text-2xl font-bold text-deep-teal">{{ $stats['clases_programadas_hoy'] ?? 0 }}</p>
+            <p class="text-sm text-dark-teal">Clases Programadas</p>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Asistencias Registradas -->
+@if(isset($asistencias) && $asistencias->count() > 0)
+<div class="bg-white rounded-xl p-6 shadow-lg mb-8">
+    <h3 class="text-xl font-bold text-deep-teal mb-4 flex items-center">
+        <i class="fas fa-clock mr-3 text-blue-500"></i>
+        Últimas Asistencias Registradas
+    </h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Docente</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Materia</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha/Hora</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach($asistencias as $asistencia)
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ $asistencia->grupoMateriaHorario->docente->user->name ?? 'N/A' }}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {{ $asistencia->grupoMateriaHorario->grupoMateria->materia->nombre ?? 'N/A' }}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {{ \Carbon\Carbon::parse($asistencia->fecha)->format('d/m/Y') }} 
+                        {{ $asistencia->hora_registro ?? '' }}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        @if($asistencia->estado == 'presente')
+                            <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                <i class="fas fa-check mr-1"></i> Presente
+                            </span>
+                        @elseif($asistencia->estado == 'tardanza')
+                            <span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                                <i class="fas fa-clock mr-1"></i> Tardanza
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                                <i class="fas fa-times mr-1"></i> Ausente
+                            </span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+<!-- Distribución de Estados de Asistencia -->
+@if(isset($tendencias['distribucion_estados']))
+<div class="bg-white rounded-xl p-6 shadow-lg">
+    <h3 class="text-xl font-bold text-deep-teal mb-4 flex items-center">
+        <i class="fas fa-chart-pie mr-3 text-purple-500"></i>
+        Distribución de Asistencias - Hoy
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Presentes -->
+        <div class="text-center p-4 border border-green-200 rounded-lg">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-check text-green-600 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-deep-teal">{{ $tendencias['distribucion_estados']['presente'] ?? 0 }}</p>
+            <p class="text-sm text-green-600 font-medium">Presentes</p>
+        </div>
+        
+        <!-- Tardanzas -->
+        <div class="text-center p-4 border border-yellow-200 rounded-lg">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-deep-teal">{{ $tendencias['distribucion_estados']['tardanza'] ?? 0 }}</p>
+            <p class="text-sm text-yellow-600 font-medium">Tardanzas</p>
+        </div>
+        
+        <!-- Ausentes -->
+        <div class="text-center p-4 border border-red-200 rounded-lg">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-times text-red-600 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-deep-teal">{{ $tendencias['distribucion_estados']['ausente'] ?? 0 }}</p>
+            <p class="text-sm text-red-600 font-medium">Ausentes</p>
+        </div>
+    </div>
+</div>
+@endif
         </main>
     </div>
 
@@ -617,5 +780,46 @@
             });
         });
     </script>
+<script>
+    // Actualización automática cada 30 segundos
+    function actualizarEstadisticas() {
+        fetch('/dashboard/estadisticas-tiempo-real')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Estadísticas actualizadas:', data);
+                // Aquí puedes agregar lógica para actualizar elementos específicos si lo deseas
+            })
+            .catch(error => console.error('Error actualizando estadísticas:', error));
+    }
+
+    // Actualizar cada 30 segundos (opcional)
+    // setInterval(actualizarEstadisticas, 30000);
+
+    // Botón de actualización manual
+    document.addEventListener('DOMContentLoaded', function() {
+        // Crear botón de actualización
+        const updateButton = document.createElement('button');
+        updateButton.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Actualizar';
+        updateButton.className = 'fixed bottom-6 right-6 bg-light-teal hover:bg-medium-teal text-white px-4 py-3 rounded-full shadow-lg z-50 transition-colors flex items-center';
+        updateButton.onclick = function() {
+            actualizarEstadisticas();
+            // Efecto visual de giro
+            updateButton.querySelector('i').classList.add('fa-spin');
+            setTimeout(() => {
+                updateButton.querySelector('i').classList.remove('fa-spin');
+            }, 1000);
+        };
+        
+        // Solo mostrar para admin/coordinador
+        @if(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador')))
+        document.body.appendChild(updateButton);
+        @endif
+    });
+</script>
 </body>
 </html>

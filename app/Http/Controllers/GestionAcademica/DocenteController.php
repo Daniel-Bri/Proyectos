@@ -25,31 +25,37 @@ use Carbon\Carbon;
 
 class DocenteController extends Controller
 {
-    public function index()
-    {
-        // Verificar autenticación primero
-        if (!auth()->check()) {
-            return redirect()->route('login')->with('error', 'Debe iniciar sesión para acceder a esta página.');
-        }
-
-        $user = auth()->user();
-        
-        if ($user->hasRole('admin')) {
-            $docentes = Docente::with(['user', 'carreras'])->paginate(10);
-        } else if ($user->hasRole('coordinador')) {
-            $docentes = Docente::whereHas('user', function($query) use ($user) {
-                $query->where('facultad_id', $user->facultad_id);
-            })->with(['user', 'carreras'])->paginate(10);
-        } else {
-            abort(403, 'No tienes permisos para ver esta página.');
-        }
-
-        // Registrar en bitácora
-        BitacoraController::registrar('Consulta', 'Docente', null, $user->id, null, 'Consultó lista de docentes');
-        
-        return view('admin.docentes.index', compact('docentes'));
+ public function index()
+{
+    // Verificar autenticación primero
+    if (!auth()->check()) {
+        return redirect()->route('login')->with('error', 'Debe iniciar sesión para acceder a esta página.');
     }
 
+    $user = auth()->user();
+    
+    if ($user->hasRole('admin')) {
+        $docentes = Docente::with(['user', 'carreras'])->paginate(10);
+    } else if ($user->hasRole('coordinador')) {
+        // SOLUCIÓN CORREGIDA: No hay facultad_id en users, así que mostramos todos los docentes
+        // o implementamos una lógica de filtrado alternativa si es necesaria
+        
+        $docentes = Docente::with(['user', 'carreras'])->paginate(10);
+        
+        // Si necesitas filtrar por alguna otra relación, podrías usar:
+        // $docentes = Docente::whereHas('carreras', function($query) use ($user) {
+        //     // Aquí pondrías la lógica de filtrado si existe relación con facultad
+        // })->with(['user', 'carreras'])->paginate(10);
+        
+    } else {
+        abort(403, 'No tienes permisos para ver esta página.');
+    }
+
+    // Registrar en bitácora
+    BitacoraController::registrar('Consulta', 'Docente', null, $user->id, null, 'Consultó lista de docentes');
+    
+    return view('admin.docentes.index', compact('docentes'));
+}
     public function create()
     {
         // Verificar autenticación

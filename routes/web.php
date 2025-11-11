@@ -6,6 +6,7 @@ use App\Http\Controllers\RolController;
 use App\Http\Controllers\GestionAcademica\DocenteController;
 use App\Http\Controllers\Administracion\UserController;
 
+
 // Página de inicio
 Route::get('/', function () {
     return view('welcome');
@@ -21,7 +22,8 @@ Route::middleware(['auth'])->group(function () {
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+    // ✅ NUEVA RUTA: Estadísticas en tiempo real para el panel de control
+    Route::get('/dashboard/estadisticas-tiempo-real', [DashboardController::class, 'getEstadisticasTiempoReal'])->name('dashboard.estadisticas-tiempo-real');
     // =============================================
     // RUTAS PARA CAMBIO DE CONTRASEÑA
     // =============================================

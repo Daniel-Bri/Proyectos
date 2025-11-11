@@ -16,16 +16,34 @@ use Illuminate\Support\Facades\Auth;
 class GrupoController extends Controller
 {
     /**
-     * Determinar la vista según el rol
+     * Verificar acceso básico para admin y coordinador
+     */
+    private function checkAccess()
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            abort(403, 'Usuario no autenticado');
+        }
+        
+        // SOLUCIÓN: Permitir acceso a admin y coordinador
+        if ($user->hasRole('admin') || $user->hasRole('coordinador')) {
+            return true;
+        }
+        
+        abort(403, 'No tienes permisos para acceder a esta sección');
+    }
+
+    /**
+     * Determinar la vista según el rol - MODIFICADO
      */
     private function getViewPath($viewName)
     {
         $user = Auth::user();
         
-        if ($user->hasRole('admin')) {
+        // Tanto admin como coordinador usan las vistas del admin
+        if ($user->hasRole('admin') || $user->hasRole('coordinador')) {
             return "admin.grupos.{$viewName}";
-        } elseif ($user->hasRole('coordinador')) {
-            return "coordinador.grupos.{$viewName}";
         } else {
             return "docente.grupos.{$viewName}";
         }
@@ -36,18 +54,15 @@ class GrupoController extends Controller
      */
     public function index()
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $user = Auth::user();
         
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('admin') || $user->hasRole('coordinador')) {
             $grupos = Grupo::with(['grupoMaterias.materia'])
                 ->orderBy('nombre')
                 ->paginate(10);
                 
-        } elseif ($user->hasRole('coordinador')) {
-            // Coordinador ve todos los grupos
-            $grupos = Grupo::with(['grupoMaterias.materia'])
-                ->orderBy('nombre')
-                ->paginate(10);
         } else {
             // Docente - grupos donde imparte materias
             $docente = $user->docente;
@@ -81,6 +96,8 @@ class GrupoController extends Controller
      */
     public function create()
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $user = Auth::user();
         
         $view = $this->getViewPath('create');
@@ -92,6 +109,8 @@ class GrupoController extends Controller
      */
     public function store(Request $request)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $user = Auth::user();
 
         $request->validate([
@@ -128,6 +147,8 @@ class GrupoController extends Controller
      */
     public function show($id)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         try {
             $grupo = Grupo::with([
                 'grupoMaterias.materia',
@@ -155,6 +176,8 @@ class GrupoController extends Controller
      */
     public function edit($id)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $grupo = Grupo::findOrFail($id);
 
         $view = $this->getViewPath('edit');
@@ -166,6 +189,8 @@ class GrupoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $grupo = Grupo::findOrFail($id);
         $user = Auth::user();
 
@@ -205,6 +230,8 @@ class GrupoController extends Controller
      */
     public function destroy($id)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $grupo = Grupo::findOrFail($id);
         $user = Auth::user();
 
@@ -240,6 +267,8 @@ class GrupoController extends Controller
      */
     public function asignarMaterias($id)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $grupo = Grupo::with(['grupoMaterias.materia'])->findOrFail($id);
         
         // CORREGIDO: Eliminar el filtro por estado que no existe
@@ -256,6 +285,8 @@ class GrupoController extends Controller
      */
     public function storeAsignarMaterias(Request $request, $id)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $grupo = Grupo::findOrFail($id);
         $user = Auth::user();
 
@@ -298,6 +329,8 @@ class GrupoController extends Controller
      */
     public function removerMateria(Request $request, $idGrupo, $siglaMateria)
     {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
+        
         $grupo = Grupo::findOrFail($idGrupo);
         $user = Auth::user();
 
@@ -331,88 +364,91 @@ class GrupoController extends Controller
         }
     }
 
-/**
- * Exportar grupos a Excel
- */
-public function export()
-{
-    $user = Auth::user();
-    
-    try {
-        $grupos = DB::table('grupo as g')
-            ->leftJoin('grupo_materia as gm', 'g.id', '=', 'gm.id_grupo')
-            ->select(
-                'g.id',
-                'g.nombre',
-                'g.gestion',
-                DB::raw('COUNT(gm.id) as materias_count'),
-                'g.created_at'
-            )
-            ->groupBy('g.id', 'g.nombre', 'g.gestion', 'g.created_at')
-            ->orderBy('g.nombre')
-            ->get();
-
-        if ($grupos->isEmpty()) {
-            return redirect()->route('admin.grupos.index')
-                ->with('warning', 'No hay grupos registrados para exportar.');
-        }
-
-        $fileName = 'grupos-' . date('Y-m-d_H-i') . '.csv';
+    /**
+     * Exportar grupos a Excel
+     */
+    public function export()
+    {
+        $this->checkAccess(); // ← AGREGAR ESTA LÍNEA
         
-        $headers = [
-            'Content-Type' => 'text/csv; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ];
+        $user = Auth::user();
+        
+        try {
+            $grupos = DB::table('grupo as g')
+                ->leftJoin('grupo_materia as gm', 'g.id', '=', 'gm.id_grupo')
+                ->select(
+                    'g.id',
+                    'g.nombre',
+                    'g.gestion',
+                    DB::raw('COUNT(gm.id) as materias_count'),
+                    'g.created_at'
+                )
+                ->groupBy('g.id', 'g.nombre', 'g.gestion', 'g.created_at')
+                ->orderBy('g.nombre')
+                ->get();
 
-        $callback = function() use ($grupos) {
-            $file = fopen('php://output', 'w');
-            
-            // Agregar BOM para UTF-8 (importante para Excel)
-            fwrite($file, "\xEF\xBB\xBF");
-            
-            // Encabezados con separación correcta
-            $encabezados = [
-                'ID',
-                'NOMBRE DEL GRUPO', 
-                'GESTIÓN ACADÉMICA',
-                'CANTIDAD DE MATERIAS',
-                'FECHA DE CREACIÓN',
-                'ESTADO'
-            ];
-            fputcsv($file, $encabezados, ';'); // Usar punto y coma como separador
-            
-            // Datos de los grupos
-            foreach ($grupos as $grupo) {
-                $fila = [
-                    $grupo->id,
-                    $grupo->nombre,
-                    $grupo->gestion,
-                    $grupo->materias_count,
-                    $grupo->created_at ? date('d/m/Y H:i', strtotime($grupo->created_at)) : '',
-                    'ACTIVO' // Estado por defecto
-                ];
-                fputcsv($file, $fila, ';'); // Usar punto y coma como separador
+            if ($grupos->isEmpty()) {
+                return redirect()->route('admin.grupos.index')
+                    ->with('warning', 'No hay grupos registrados para exportar.');
             }
+
+            $fileName = 'grupos-' . date('Y-m-d_H-i') . '.csv';
             
-            fclose($file);
-        };
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
+            ];
 
-        $this->registrarBitacoraSegura('Exportación', 'Grupo', null, $user->id, 
-            'Exportó listado de ' . $grupos->count() . ' grupos a Excel');
+            $callback = function() use ($grupos) {
+                $file = fopen('php://output', 'w');
+                
+                // Agregar BOM para UTF-8 (importante para Excel)
+                fwrite($file, "\xEF\xBB\xBF");
+                
+                // Encabezados con separación correcta
+                $encabezados = [
+                    'ID',
+                    'NOMBRE DEL GRUPO', 
+                    'GESTIÓN ACADÉMICA',
+                    'CANTIDAD DE MATERIAS',
+                    'FECHA DE CREACIÓN',
+                    'ESTADO'
+                ];
+                fputcsv($file, $encabezados, ';'); // Usar punto y coma como separador
+                
+                // Datos de los grupos
+                foreach ($grupos as $grupo) {
+                    $fila = [
+                        $grupo->id,
+                        $grupo->nombre,
+                        $grupo->gestion,
+                        $grupo->materias_count,
+                        $grupo->created_at ? date('d/m/Y H:i', strtotime($grupo->created_at)) : '',
+                        'ACTIVO' // Estado por defecto
+                    ];
+                    fputcsv($file, $fila, ';'); // Usar punto y coma como separador
+                }
+                
+                fclose($file);
+            };
 
-        return response()->stream($callback, 200, $headers);
+            $this->registrarBitacoraSegura('Exportación', 'Grupo', null, $user->id, 
+                'Exportó listado de ' . $grupos->count() . ' grupos a Excel');
 
-    } catch (\Exception $e) {
-        $this->registrarBitacoraSegura('Error', 'Grupo', null, $user->id, 
-            'Error al exportar grupos: ' . $e->getMessage());
-        
-        return redirect()->route('admin.grupos.index')
-            ->with('error', 'Error al exportar los grupos: ' . $e->getMessage());
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            $this->registrarBitacoraSegura('Error', 'Grupo', null, $user->id, 
+                'Error al exportar grupos: ' . $e->getMessage());
+            
+            return redirect()->route('admin.grupos.index')
+                ->with('error', 'Error al exportar los grupos: ' . $e->getMessage());
+        }
     }
-}
+
     /**
      * Método seguro para registrar en bitácora
      */

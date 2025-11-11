@@ -167,11 +167,7 @@
                     </div>
                     <p class="text-amber-600 font-medium text-sm sm:text-base">No hay grupos asignados</p>
                     <p class="text-amber-500 text-xs sm:text-sm mb-3 sm:mb-4">Primero asigna grupos a esta materia</p>
-                    <a href="#" 
-                       class="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-[#3CA6A6] hover:bg-[#026773] text-white font-bold rounded-lg sm:rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-xs sm:text-sm">
-                        <i class="fas fa-users mr-1 sm:mr-2"></i>
-                        Asignar Grupos
-                    </a>
+
                 </div>
                 @endif
             </div>
@@ -317,11 +313,7 @@
                 </div>
                 <h4 class="text-lg sm:text-xl font-bold text-gray-700 mb-2">No hay grupos asignados</h4>
                 <p class="text-gray-600 text-sm sm:text-base mb-4">Esta materia no tiene grupos asignados actualmente.</p>
-                <a href="#" 
-                   class="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-[#3CA6A6] hover:bg-[#026773] text-white font-bold rounded-lg sm:rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-xs sm:text-sm">
-                    <i class="fas fa-users mr-1 sm:mr-2"></i>
-                    Asignar Grupos Primero
-                </a>
+
             </div>
             @endif
         </div>

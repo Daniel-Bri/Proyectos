@@ -21,30 +21,21 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        // ✅ SOLO ADMIN puede acceder a la gestión de usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $search = $request->get('search');
         
-        // Si es coordinador, solo ver usuarios de su misma carrera
-        if (Auth::user()->hasRole('coordinador')) {
-            $users = User::with('roles')
-                ->whereHas('carrera', function($query) {
-                    $query->where('id', Auth::user()->carrera_id);
-                })
-                ->when($search, function($query) use ($search) {
-                    return $query->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orderBy('name', 'asc')
-                ->paginate(10);
-        } else {
-            // Admin ve todos los usuarios
-            $users = User::with('roles')
-                ->when($search, function($query) use ($search) {
-                    return $query->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orderBy('name', 'asc')
-                ->paginate(10);
-        }
+        // Admin ve todos los usuarios
+        $users = User::with('roles')
+            ->when($search, function($query) use ($search) {
+                return $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(10);
 
         return view('admin.users.index', compact('users', 'search'));
     }
@@ -54,41 +45,29 @@ class UserController extends Controller
      */
     public function create()
     {
-        // Coordinador solo puede crear docentes
-        if (Auth::user()->hasRole('coordinador')) {
-            $roles = Role::where('name', 'docente')->get();
-        } else {
-            $roles = Role::all();
+        // ✅ SOLO ADMIN puede crear usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para crear usuarios.');
         }
-        
+
+        $roles = Role::all();
         return view('admin.users.create', compact('roles'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-public function store(Request $request)
-{
-    // Obtener el ID del rol docente
-    $docenteRole = Role::where('name', 'docente')->first();
-    $docenteRoleId = $docenteRole ? $docenteRole->id : null;
+    public function store(Request $request)
+    {
+        // ✅ SOLO ADMIN puede crear usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para crear usuarios.');
+        }
 
-    // Validaciones específicas por rol
-    if (Auth::user()->hasRole('coordinador')) {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'roles' => 'required|array|size:1',
-            'roles.*' => 'in:docente',
-            // Campos requeridos para docente
-            'codigo' => 'required|string|max:20|unique:docente',
-            'telefono' => 'required|string|max:15',
-            'sueldo' => 'required|numeric|min:0',
-            'fecha_contrato' => 'required|date',
-            'fecha_final' => 'required|date|after:fecha_contrato',
-        ]);
-    } else {
+        // Obtener el ID del rol docente
+        $docenteRole = Role::where('name', 'docente')->first();
+        $docenteRoleId = $docenteRole ? $docenteRole->id : null;
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -102,67 +81,60 @@ public function store(Request $request)
             'fecha_contrato' => $docenteRoleId && in_array($docenteRoleId, $request->roles ?? []) ? 'required|date' : 'nullable',
             'fecha_final' => $docenteRoleId && in_array($docenteRoleId, $request->roles ?? []) ? 'required|date|after:fecha_contrato' : 'nullable',
         ]);
+
+        DB::transaction(function() use ($request, $docenteRoleId) {
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'password_set' => true,
+                'email_verified_at' => now(),
+            ];
+
+            $user = User::create($userData);
+
+            if ($request->has('roles')) {
+                $user->roles()->sync($request->roles);
+                
+                // ✅ CREAR DOCENTE SI EL ROL ES DOCENTE
+                if ($docenteRoleId && in_array($docenteRoleId, $request->roles)) {
+                    if (empty($request->codigo)) {
+                        \Log::error('Campo código vacío al crear docente', $request->all());
+                        throw new \Exception('Error de validación: el campo código es requerido.');
+                    }
+
+                    Docente::create([
+                        'codigo' => $request->codigo,
+                        'telefono' => $request->telefono,
+                        'sueldo' => $request->sueldo,
+                        'fecha_contrato' => $request->fecha_contrato,
+                        'fecha_final' => $request->fecha_final,
+                        'id_users' => $user->id
+                    ]);
+                }
+            }
+
+            // Registrar en bitácora
+            BitacoraController::registrarCreacion(
+                'Usuario', 
+                $user->id, 
+                Auth::id(),
+                "Usuario {$user->name} creado por " . Auth::user()->name
+            );
+        });
+
+        return redirect()->route('admin.users.index')
+                        ->with('success', 'Usuario creado exitosamente.');
     }
 
-    DB::transaction(function() use ($request, $docenteRoleId) {
-        $userData = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'password_set' => true,
-            'email_verified_at' => now(),
-        ];
-
-        // Si es coordinador, asignar la misma carrera
-        if (Auth::user()->hasRole('coordinador')) {
-            $userData['carrera_id'] = Auth::user()->carrera_id;
-        }
-
-        $user = User::create($userData);
-
-        if ($request->has('roles')) {
-            $user->roles()->sync($request->roles);
-            
-            // ✅ CREAR DOCENTE SI EL ROL ES DOCENTE
-            if ($docenteRoleId && in_array($docenteRoleId, $request->roles)) {
-                // Validación adicional para asegurar que los campos no estén vacíos
-                if (empty($request->codigo)) {
-                    // Si llegamos aquí, es un error de validación que debería haberse capturado antes
-                    \Log::error('Campo código vacío al crear docente', $request->all());
-                    throw new \Exception('Error de validación: el campo código es requerido.');
-                }
-
-                Docente::create([
-                    'codigo' => $request->codigo,
-                    'telefono' => $request->telefono,
-                    'sueldo' => $request->sueldo,
-                    'fecha_contrato' => $request->fecha_contrato,
-                    'fecha_final' => $request->fecha_final,
-                    'id_users' => $user->id
-                ]);
-            }
-        }
-
-        // Registrar en bitácora
-        BitacoraController::registrarCreacion(
-            'Usuario', 
-            $user->id, 
-            Auth::id(),
-            "Usuario {$user->name} creado por " . Auth::user()->name
-        );
-    });
-
-    return redirect()->route('admin.users.index')
-                    ->with('success', 'Usuario creado exitosamente.');
-}
     /**
      * Display the specified resource.
      */
     public function show(User $user)
     {
-        // Coordinador solo puede ver usuarios de su carrera
-        if (Auth::user()->hasRole('coordinador') && $user->carrera_id !== Auth::user()->carrera_id) {
-            abort(403, 'No tienes permiso para ver este usuario.');
+        // ✅ SOLO ADMIN puede ver usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para ver usuarios.');
         }
 
         $user->load('roles');
@@ -174,18 +146,12 @@ public function store(Request $request)
      */
     public function edit(User $user)
     {
-        // Coordinador solo puede editar usuarios de su carrera
-        if (Auth::user()->hasRole('coordinador') && $user->carrera_id !== Auth::user()->carrera_id) {
-            abort(403, 'No tienes permiso para editar este usuario.');
+        // ✅ SOLO ADMIN puede editar usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para editar usuarios.');
         }
 
-        // Coordinador solo puede asignar rol docente
-        if (Auth::user()->hasRole('coordinador')) {
-            $roles = Role::where('name', 'docente')->get();
-        } else {
-            $roles = Role::all();
-        }
-
+        $roles = Role::all();
         $user->load('roles');
         return view('admin.users.edit', compact('user', 'roles'));
     }
@@ -194,22 +160,12 @@ public function store(Request $request)
      * Update the specified resource in storage.
      */
     public function update(Request $request, User $user)
-{
-    // Coordinador solo puede editar usuarios de su carrera
-    if (Auth::user()->hasRole('coordinador') && $user->carrera_id !== Auth::user()->carrera_id) {
-        abort(403, 'No tienes permiso para editar este usuario.');
-    }
+    {
+        // ✅ SOLO ADMIN puede editar usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para editar usuarios.');
+        }
 
-    // Validaciones específicas por rol
-    if (Auth::user()->hasRole('coordinador')) {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'roles' => 'required|array|size:1',
-            'roles.*' => 'in:docente' // Solo puede asignar rol docente
-        ]);
-    } else {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
@@ -217,53 +173,52 @@ public function store(Request $request)
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id'
         ]);
+
+        DB::transaction(function() use ($request, $user) {
+            $updateData = [
+                'name' => $request->name,
+                'email' => $request->email,
+            ];
+
+            // Actualizar contraseña solo si se proporciona
+            if ($request->filled('password')) {
+                $updateData['password'] = Hash::make($request->password);
+                $updateData['password_set'] = true;
+            }
+
+            $user->update($updateData);
+
+            if ($request->has('roles')) {
+                $user->roles()->sync($request->roles);
+            }
+
+            // Registrar en bitácora
+            BitacoraController::registrarActualizacion(
+                'Usuario', 
+                $user->id, 
+                Auth::id(),
+                "Usuario {$user->name} actualizado por " . Auth::user()->name
+            );
+        });
+
+        return redirect()->route('admin.users.index')
+                        ->with('success', 'Usuario actualizado exitosamente.');
     }
-
-    DB::transaction(function() use ($request, $user) {
-        $updateData = [
-            'name' => $request->name,
-            'email' => $request->email,
-        ];
-
-        // Actualizar contraseña solo si se proporciona
-        if ($request->filled('password')) {
-            $updateData['password'] = Hash::make($request->password);
-            $updateData['password_set'] = true;
-        }
-
-        $user->update($updateData);
-
-        if ($request->has('roles')) {
-            $user->roles()->sync($request->roles);
-        }
-
-        // Registrar en bitácora
-        BitacoraController::registrarActualizacion(
-            'Usuario', 
-            $user->id, 
-            Auth::id(),
-            "Usuario {$user->name} actualizado por " . Auth::user()->name
-        );
-    });
-
-    return redirect()->route('admin.users.index')
-                    ->with('success', 'Usuario actualizado exitosamente.');
-}
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(User $user)
     {
-        // Coordinador NO puede eliminar usuarios
-        if (Auth::user()->hasRole('coordinador')) {
-            abort(403, 'No tienes permiso para eliminar usuarios.');
+        // ✅ SOLO ADMIN puede eliminar usuarios
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para eliminar usuarios.');
         }
 
         DB::transaction(function() use ($user) {
             $userName = $user->name;
             
-            // ✅ NUEVO: Verificar si el usuario tiene un docente relacionado y eliminarlo
+            // Verificar si el usuario tiene un docente relacionado y eliminarlo
             if ($user->docente) {
                 $docente = $user->docente;
                 
@@ -306,9 +261,9 @@ public function store(Request $request)
      */
     public function updatePassword(Request $request, User $user)
     {
-        // Coordinador solo puede resetear contraseñas de usuarios de su carrera
-        if (Auth::user()->hasRole('coordinador') && $user->carrera_id !== Auth::user()->carrera_id) {
-            abort(403, 'No tienes permiso para resetear la contraseña de este usuario.');
+        // ✅ SOLO ADMIN puede resetear contraseñas
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para resetear contraseñas.');
         }
 
         $request->validate([
@@ -337,9 +292,9 @@ public function store(Request $request)
      */
     public function updateVerification(User $user)
     {
-        // Coordinador NO puede verificar emails
-        if (Auth::user()->hasRole('coordinador')) {
-            abort(403, 'No tienes permiso para verificar emails.');
+        // ✅ SOLO ADMIN puede verificar emails
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para verificar emails.');
         }
 
         $newStatus = $user->email_verified_at ? null : now();
@@ -366,9 +321,9 @@ public function store(Request $request)
      */
     public function generateTemporalToken(User $user)
     {
-        // Coordinador NO puede generar tokens
-        if (Auth::user()->hasRole('coordinador')) {
-            abort(403, 'No tienes permiso para generar tokens temporales.');
+        // ✅ SOLO ADMIN puede generar tokens
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para generar tokens temporales.');
         }
 
         $temporalToken = Str::random(60);

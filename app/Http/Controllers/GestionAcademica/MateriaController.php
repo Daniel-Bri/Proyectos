@@ -17,9 +17,34 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log; 
 
 class MateriaController extends Controller
 {
+    /**
+     * Verificar acceso básico para admin y coordinador
+     */
+    private function checkAccess()
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            abort(403, 'Usuario no autenticado');
+        }
+        
+        // SOLUCIÓN: Permitir acceso por rol sin verificar permisos específicos
+        if ($user->hasRole(['admin', 'coordinador'])) {
+            return true;
+        }
+        
+        Log::warning('Acceso denegado: Usuario sin rol adecuado', [
+            'user_id' => $user->id,
+            'roles' => $user->getRoleNames()
+        ]);
+        abort(403, 'No tienes permisos para acceder a esta sección');
+    }
+
     /**
      * Determinar la vista según el rol
      */
@@ -27,109 +52,112 @@ class MateriaController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['admin', 'coordinador'])) {
             return "admin.materias.{$viewName}";
-        } elseif ($user->hasRole('coordinador')) {
-            return "coordinador.materias.{$viewName}";
         } else {
             return "docente.materias.{$viewName}";
         }
     }
 
     /**
-     * Verificar permisos de coordinador (modificado)
+     * Aplicar filtros de búsqueda a la consulta
      */
-    private function checkCoordinadorPermission($materia = null)
+    private function aplicarFiltrosBusqueda($query, $request)
     {
-        $user = Auth::user();
-        
-        if ($user->hasRole('coordinador')) {
-            // Coordinadores pueden ver todas las materias (sin filtro por carrera)
-            if ($materia) {
-                // Lógica alternativa si es necesaria
+        // Aplicar filtro de búsqueda por texto
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function($q) use ($search) {
+                $q->where('sigla', 'LIKE', "%{$search}%")
+                  ->orWhere('nombre', 'LIKE', "%{$search}%")
+                  ->orWhereHas('categoria', function($q) use ($search) {
+                      $q->where('nombre', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        // Aplicar filtro por semestre
+        if ($request->filled('semestre')) {
+            $query->where('semestre', $request->semestre);
+        }
+
+        // Aplicar filtro por estado
+        if ($request->filled('estado')) {
+            if ($request->estado == 'activa') {
+                $query->has('grupoMaterias');
+            } elseif ($request->estado == 'sin_grupos') {
+                $query->doesntHave('grupoMaterias');
             }
         }
     }
 
-/**
- * Display a listing of the resource.
- */
-public function index()
-{
-    $user = Auth::user();
-    
-    if ($user->hasRole('admin')) {
-        $materias = Materia::with([
-            'categoria:id,nombre',
-            'grupoMaterias.grupo'
-        ])->orderBy('sigla')->paginate(10);
-        
-    } elseif ($user->hasRole('coordinador')) {
-        // Coordinador ve todas las materias (sin filtro por carrera)
-        $materias = Materia::with([
-            'categoria:id,nombre',
-            'grupoMaterias.grupo'
-        ])->orderBy('sigla')->paginate(10);
-    } else {
-        // PARA DOCENTE - CORREGIDO: usar id_docente
-        $docente = $user->docente;
-        
-        if (!$docente) {
-            $materias = collect();
-            \Log::warning('Usuario no tiene perfil de docente', ['user_id' => $user->id]);
-        } else {
-            // CORREGIDO: Usar id_docente en lugar de codigo_docente
-            $materias = Materia::with([
-                'categoria:id,nombre',
-                'grupoMaterias.grupo',
-                'grupoMaterias.horarios.horario',
-                'grupoMaterias.horarios.aula'
-            ])
-            ->whereHas('grupoMaterias.horarios', function($query) use ($docente) {
-                $query->where('id_docente', $docente->codigo); // CORREGIDO AQUÍ
-            })
-            ->orderBy('sigla')
-            ->get();
-
-            // Debug
-            \Log::info('Materias asignadas al docente', [
-                'docente_codigo' => $docente->codigo,
-                'materias_count' => $materias->count(),
-                'materias_siglas' => $materias->pluck('sigla')->toArray()
-            ]);
-        }
-    }
-    
-    // Registrar en bitácora - SEGURO
-    $this->registrarBitacoraSegura('Consulta', 'Materia', null, $user->id, 'Consultó listado de materias');
-    
-    $view = $this->getViewPath('index');
-    
-    // Para docente, pasar el docente también a la vista
-    if ($user->hasRole('docente')) {
-        return view($view, compact('materias', 'docente'));
-    }
-    
-    return view($view, compact('materias'));
-}
     /**
-     * Show the form for creating a new resource.
+     * Display a listing of the resource
+     */
+    public function index(Request $request)
+    {
+        // Verificar acceso primero
+        $this->checkAccess();
+        
+        $user = Auth::user();
+        
+        Log::info('=== ACCESO A MATERIAS INDEX ===', [
+            'user_id' => $user->id,
+            'user_role' => $user->getRoleNames()->first()
+        ]);
+        
+        // Validar parámetros de búsqueda
+        try {
+            $validated = $request->validate([
+                'search' => 'nullable|string|max:100',
+                'semestre' => 'nullable|integer|between:1,10',
+                'estado' => 'nullable|in:activa,sin_grupos',
+                'page' => 'nullable|integer|min:1'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Error de validación en búsqueda', ['errors' => $e->errors()]);
+            return redirect()->route('admin.materias.index')
+                ->with('warning', 'Algunos parámetros de búsqueda no eran válidos.');
+        }
+
+        $query = Materia::with([
+            'categoria:id,nombre',
+            'grupoMaterias.grupo'
+        ]);
+
+        // Aplicar filtros de búsqueda
+        $this->aplicarFiltrosBusqueda($query, $request);
+        
+        $materias = $query->orderBy('sigla')->paginate(10);
+        
+        // Registrar en bitácora
+        $this->registrarBitacoraSegura('Consulta', 'Materia', null, $user->id, 
+            'Consultó listado de materias como ' . $user->getRoleNames()->first());
+        
+        $view = $this->getViewPath('index');
+        
+        return view($view, compact('materias'));
+    }
+
+    /**
+     * Show the form for creating a new resource
      */
     public function create()
     {
-        $user = Auth::user();
+        $this->checkAccess();
         
         $categorias = Categoria::all();
-        
         $view = $this->getViewPath('create');
+        
         return view($view, compact('categorias'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource in storage
      */
     public function store(Request $request)
     {
+        $this->checkAccess();
         $user = Auth::user();
 
         $request->validate([
@@ -144,9 +172,9 @@ public function index()
             
             $materia = Materia::create($request->all());
             
-            // Registrar en bitácora - SEGURO
+            // Registrar en bitácora
             $this->registrarBitacoraSegura('Creación', 'Materia', $materia->sigla, $user->id, 
-                "Nueva materia: {$materia->sigla} - {$materia->nombre}");
+                "Nueva materia creada por " . $user->getRoleNames()->first() . ": {$materia->sigla} - {$materia->nombre}");
             
             DB::commit();
             
@@ -165,6 +193,8 @@ public function index()
      */
     public function show($sigla)
     {
+        $this->checkAccess();
+        
         try {
             $materia = Materia::with([
                 'categoria', 
@@ -175,11 +205,9 @@ public function index()
                 'grupoMaterias.horarios.docente'
             ])->findOrFail($sigla);
 
-            // Verificar permisos de coordinador
-            $this->checkCoordinadorPermission($materia);
-
             $user = Auth::user();
-            // Registrar en bitácora - SEGURO
+            
+            // Registrar en bitácora
             $this->registrarBitacoraSegura('Consulta', 'Materia', $materia->sigla, $user->id, 
                 "Consultó detalles de materia: {$materia->sigla}");
 
@@ -187,21 +215,19 @@ public function index()
             return view($view, compact('materia'));
             
         } catch (\Exception $e) {
-            return redirect()->back()
+            return redirect()->route('admin.materias.index')
                 ->with('error', 'Error al cargar la materia: ' . $e->getMessage());
         }
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified resource
      */
     public function edit($sigla)
     {
-        $materia = Materia::findOrFail($sigla);
+        $this->checkAccess();
         
-        // Verificar permisos de coordinador
-        $this->checkCoordinadorPermission($materia);
-
+        $materia = Materia::findOrFail($sigla);
         $categorias = Categoria::all();
 
         $view = $this->getViewPath('edit');
@@ -209,15 +235,14 @@ public function index()
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified resource in storage
      */
     public function update(Request $request, $sigla)
     {
+        $this->checkAccess();
+        
         $materia = Materia::findOrFail($sigla);
         $user = Auth::user();
-        
-        // Verificar permisos de coordinador
-        $this->checkCoordinadorPermission($materia);
 
         $request->validate([
             'sigla' => 'required|max:10|unique:materia,sigla,' . $materia->sigla . ',sigla',
@@ -233,9 +258,9 @@ public function index()
             $datosAntiguos = $materia->toArray();
             $materia->update($request->all());
             
-            // Registrar en bitácora - SEGURO
+            // Registrar en bitácora
             $this->registrarBitacoraSegura('Actualización', 'Materia', $materia->sigla, $user->id, 
-                "Actualizó materia: {$materia->sigla}. Cambios: " . $this->getCambios($datosAntiguos, $materia->toArray()));
+                "Materia actualizada por " . $user->getRoleNames()->first() . ": {$materia->sigla}. Cambios: " . $this->getCambios($datosAntiguos, $materia->toArray()));
             
             DB::commit();
             
@@ -250,15 +275,20 @@ public function index()
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage
      */
     public function destroy($sigla)
     {
+        $this->checkAccess();
+        
         $materia = Materia::findOrFail($sigla);
         $user = Auth::user();
         
-        // Verificar permisos de coordinador
-        $this->checkCoordinadorPermission($materia);
+        // Verificar permisos - Coordinador no puede eliminar
+        if ($user->hasRole('coordinador')) {
+            return redirect()->back()
+                ->with('error', 'No tiene permisos para eliminar materias.');
+        }
 
         try {
             // Verificar si tiene grupos asignados
@@ -272,9 +302,9 @@ public function index()
             $materiaData = $materia->toArray();
             $materia->delete();
             
-            // Registrar en bitácora - SEGURO
+            // Registrar en bitácora
             $this->registrarBitacoraSegura('Eliminación', 'Materia', $sigla, $user->id, 
-                "Eliminó materia: {$materiaData['sigla']} - {$materiaData['nombre']}");
+                "Materia eliminada por Admin: {$materiaData['sigla']} - {$materiaData['nombre']}");
             
             DB::commit();
             
@@ -288,10 +318,11 @@ public function index()
     }
 
     /**
-     * Exportar materias a Excel (CSV) - VERSIÓN FUNCIONAL
+     * Exportar materias a Excel
      */
     public function export()
     {
+        $this->checkAccess();
         $user = Auth::user();
         
         try {
@@ -311,16 +342,13 @@ public function index()
                 ->orderBy('m.sigla')
                 ->get();
 
-            // VERIFICAR SI HAY MATERIAS
             if ($materias->isEmpty()) {
                 return redirect()->route('admin.materias.index')
                     ->with('warning', 'No hay materias registradas para exportar.');
             }
 
-            // CREAR ARCHIVO CSV
             $fileName = 'materias-' . date('Y-m-d_H-i') . '.csv';
             
-            // Encabezados CSV
             $headers = [
                 'Content-Type' => 'text/csv; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
@@ -329,25 +357,14 @@ public function index()
                 'Expires' => '0'
             ];
 
-            // Función para generar CSV
             $callback = function() use ($materias) {
                 $file = fopen('php://output', 'w');
-                
-                // BOM para Excel (opcional, mejora compatibilidad)
                 fwrite($file, "\xEF\xBB\xBF");
                 
-                // Encabezados
                 fputcsv($file, [
-                    'SIGLA',
-                    'NOMBRE', 
-                    'SEMESTRE',
-                    'CATEGORÍA',
-                    'GRUPOS ASIGNADOS',
-                    'ESTADO',
-                    'FECHA CREACIÓN'
+                    'SIGLA', 'NOMBRE', 'SEMESTRE', 'CATEGORÍA', 'GRUPOS ASIGNADOS', 'ESTADO', 'FECHA CREACIÓN'
                 ]);
                 
-                // Datos
                 foreach ($materias as $materia) {
                     fputcsv($file, [
                         $materia->sigla,
@@ -363,15 +380,12 @@ public function index()
                 fclose($file);
             };
 
-            // REGISTRAR EN BITÁCORA - SEGURO
             $this->registrarBitacoraSegura('Exportación', 'Materia', null, $user->id, 
                 'Exportó listado de ' . $materias->count() . ' materias a Excel');
 
-            // RETORNAR DESCARGA
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            // REGISTRAR ERROR - SEGURO
             $this->registrarBitacoraSegura('Error', 'Materia', null, $user->id, 
                 'Error al exportar materias: ' . $e->getMessage());
             
@@ -381,154 +395,103 @@ public function index()
     }
 
     /**
-     * Método seguro para registrar en bitácora (usa tu BitacoraController pero de forma segura)
-     */
-    private function registrarBitacoraSegura($accion, $entidad, $entidad_id, $usuario_id, $detalles = null)
-    {
-        try {
-            // Si el ID no es numérico, usar null para evitar errores con bigint
-            $entidad_id_segura = is_numeric($entidad_id) ? $entidad_id : null;
-            
-            // Construir la descripción completa
-            $descripcion_completa = $detalles;
-            if ($entidad_id && !is_numeric($entidad_id)) {
-                $descripcion_completa .= " (Sigla: {$entidad_id})";
-            }
-            
-            // Usar tu BitacoraController existente pero de forma segura
-            BitacoraController::registrar(
-                $accion,
-                $entidad,
-                $entidad_id_segura, // ID segura (numérica o null)
-                $usuario_id,
-                null,
-                $descripcion_completa // Usar 'descripcion' que es el campo correcto
-            );
-            
-        } catch (\Exception $e) {
-            // Si falla el BitacoraController, usar inserción directa segura
-            try {
-                DB::table('auditorias')->insert([
-                    'id_users' => $usuario_id,
-                    'accion' => $accion,
-                    'entidad' => $entidad,
-                    'entidad_id' => $entidad_id_segura,
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'descripcion' => $descripcion_completa, // Campo CORRECTO
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (\Exception $e2) {
-                // Solo log el error, no interrumpas el flujo principal
-                \Log::error('Error en bitácora: ' . $e2->getMessage());
-            }
-        }
-    }
-
-    /**
      * Mostrar formulario para asignar AULAS a grupos existentes de materia
      */
-public function asignarAulas($sigla)
-{
-    $materia = Materia::with([
-        'grupoMaterias.grupo', 
-        'grupoMaterias.horarios.horario',
-        'grupoMaterias.horarios.aula',
-        'grupoMaterias.horarios.docente'
-    ])->findOrFail($sigla);
-    
-    $user = Auth::user();
-    
-    // Verificar permisos de coordinador
-    $this->checkCoordinadorPermission($materia);
+    public function asignarAulas($sigla)
+    {
+        $this->checkAccess();
+        
+        $materia = Materia::with([
+            'grupoMaterias.grupo', 
+            'grupoMaterias.horarios.horario',
+            'grupoMaterias.horarios.aula',
+            'grupoMaterias.horarios.docente'
+        ])->findOrFail($sigla);
+        
+        $gruposMateria = $materia->grupoMaterias;
+        $aulas = Aula::all();
+        $horarios = Horario::all();
+        $docentes = Docente::all();
 
-    // CORREGIDO: Usar 'grupoMaterias' en lugar de 'grupoMateria'
-    $gruposMateria = $materia->grupoMaterias;
-    
-    $aulas = Aula::all();
-    $horarios = Horario::all();
-    $docentes = Docente::all();
-
-    $view = $this->getViewPath('asignar-aulas');
-    return view($view, compact('materia', 'gruposMateria', 'aulas', 'horarios', 'docentes'));
-}
+        $view = $this->getViewPath('asignar-aulas');
+        return view($view, compact('materia', 'gruposMateria', 'aulas', 'horarios', 'docentes'));
+    }
 
     /**
      * Procesar asignación de AULAS a grupos existentes
      */
-public function storeAsignarAulas(Request $request, $sigla)
-{
-    $materia = Materia::findOrFail($sigla);
-    $user = Auth::user();
-    
-    // Verificar permisos de coordinador
-    $this->checkCoordinadorPermission($materia);
+    public function storeAsignarAulas(Request $request, $sigla)
+    {
+        $this->checkAccess();
+        
+        $materia = Materia::findOrFail($sigla);
+        $user = Auth::user();
 
-    $request->validate([
-        'id_grupo_materia' => 'required|exists:grupo_materia,id',
-        'horarios' => 'required|array|min:1',
-        'horarios.*.id_horario_grupo' => 'required|exists:grupo_materia_horario,id',
-        'horarios.*.id_horario' => 'required|exists:horario,id',
-        'horarios.*.id_aula' => 'required|exists:aula,id'
-        // ELIMINADO: horarios.*.codigo_docente ya no es requerido
-    ]);
+        $request->validate([
+            'id_grupo_materia' => 'required|exists:grupo_materia,id',
+            'horarios' => 'required|array|min:1',
+            'horarios.*.id_horario_grupo' => 'required|exists:grupo_materia_horario,id',
+            'horarios.*.id_horario' => 'required|exists:horario,id',
+            'horarios.*.id_aula' => 'required|exists:aula,id'
+        ]);
 
-    try {
-        DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-        // Verificar que el grupo materia pertenece a esta materia
-        $grupoMateria = GrupoMateria::where('id', $request->id_grupo_materia)
-            ->where('sigla_materia', $sigla)
-            ->firstOrFail();
+            // Verificar que el grupo materia pertenece a esta materia
+            $grupoMateria = GrupoMateria::where('id', $request->id_grupo_materia)
+                ->where('sigla_materia', $sigla)
+                ->firstOrFail();
 
-        // VALIDAR AULAS OCUPADAS
-        foreach ($request->horarios as $horarioData) {
-            $aulaOcupada = GrupoMateriaHorario::where('id_aula', $horarioData['id_aula'])
-                ->where('id_horario', $horarioData['id_horario'])
-                ->where('id_grupo_materia', '!=', $grupoMateria->id) // Excluir el grupo actual
-                ->first();
+            // VALIDAR AULAS OCUPADAS
+            foreach ($request->horarios as $horarioData) {
+                $aulaOcupada = GrupoMateriaHorario::where('id_aula', $horarioData['id_aula'])
+                    ->where('id_horario', $horarioData['id_horario'])
+                    ->where('id_grupo_materia', '!=', $grupoMateria->id)
+                    ->first();
 
-            if ($aulaOcupada) {
-                $aula = Aula::find($horarioData['id_aula']);
-                $horario = Horario::find($horarioData['id_horario']);
-                
-                return redirect()->back()
-                    ->with('error', "El aula {$aula->nombre} ya está ocupada en el horario {$horario->dia} {$horario->hora_inicio}-{$horario->hora_fin}")
-                    ->withInput();
+                if ($aulaOcupada) {
+                    $aula = Aula::find($horarioData['id_aula']);
+                    $horario = Horario::find($horarioData['id_horario']);
+                    
+                    return redirect()->back()
+                        ->with('error', "El aula {$aula->nombre} ya está ocupada en el horario {$horario->dia} {$horario->hora_inicio}-{$horario->hora_fin}")
+                        ->withInput();
+                }
             }
+
+            // Actualizar SOLO el aula para cada horario existente
+            foreach ($request->horarios as $horarioData) {
+                GrupoMateriaHorario::where('id', $horarioData['id_horario_grupo'])
+                    ->where('id_grupo_materia', $grupoMateria->id)
+                    ->update([
+                        'id_aula' => $horarioData['id_aula']
+                    ]);
+            }
+
+            // Registrar en bitácora
+            $this->registrarBitacoraSegura('Asignación', 'Aulas', $grupoMateria->id, $user->id, 
+                "Asignó aulas al grupo {$grupoMateria->grupo->nombre} de materia {$materia->sigla}");
+
+            DB::commit();
+
+            return redirect()->route('admin.materias.show', $sigla)
+                ->with('success', 'Aulas asignadas al grupo exitosamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error al asignar aulas al grupo: ' . $e->getMessage())
+                ->withInput();
         }
-
-        // Actualizar SOLO el aula para cada horario existente
-        foreach ($request->horarios as $horarioData) {
-            GrupoMateriaHorario::where('id', $horarioData['id_horario_grupo'])
-                ->where('id_grupo_materia', $grupoMateria->id)
-                ->update([
-                    'id_aula' => $horarioData['id_aula']
-                    // Mantener el docente original, no actualizarlo
-                ]);
-        }
-
-        // Registrar en bitácora
-        $this->registrarBitacoraSegura('Asignación', 'Aulas', $grupoMateria->id, $user->id, 
-            "Asignó aulas al grupo {$grupoMateria->grupo->nombre} de materia {$materia->sigla}");
-
-        DB::commit();
-
-        return redirect()->route('admin.materias.show', $sigla)
-            ->with('success', 'Aulas asignadas al grupo exitosamente.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->back()
-            ->with('error', 'Error al asignar aulas al grupo: ' . $e->getMessage())
-            ->withInput();
     }
-}
+
     /**
      * Mostrar horarios de una materia
      */
     public function horarios($sigla)
     {
+        $this->checkAccess();
+        
         $materia = Materia::with([
             'grupoMaterias.horarios.horario',
             'grupoMaterias.horarios.aula',
@@ -537,11 +500,8 @@ public function storeAsignarAulas(Request $request, $sigla)
             'grupoMaterias.gestion'
         ])->findOrFail($sigla);
 
-        // Verificar permisos de coordinador
-        $this->checkCoordinadorPermission($materia);
-
         $user = Auth::user();
-        // Registrar en bitácora - SEGURO
+        
         $this->registrarBitacoraSegura('Consulta', 'Horarios', $materia->sigla, $user->id, 
             "Consultó horarios de materia: {$materia->sigla}");
 
@@ -550,8 +510,80 @@ public function storeAsignarAulas(Request $request, $sigla)
     }
 
     /**
-     * Helper para obtener cambios en actualizaciones
+     * Mostrar formulario para asignar grupo a materia
      */
+    public function asignarGrupo($sigla)
+    {
+        $this->checkAccess();
+        
+        $materia = Materia::findOrFail($sigla);
+
+        $grupos = Grupo::all();
+        $gestiones = GestionAcademica::all();
+        $docentes = Docente::all();
+        $horarios = Horario::all();
+        $aulas = Aula::all();
+
+        $view = $this->getViewPath('asignar-grupo');
+        return view($view, compact('materia', 'grupos', 'gestiones', 'docentes', 'horarios', 'aulas'));
+    }
+
+    /**
+     * Procesar asignación de grupo a materia
+     */
+    public function storeAsignarGrupo(Request $request, $sigla)
+    {
+        $this->checkAccess();
+        
+        $materia = Materia::findOrFail($sigla);
+        $user = Auth::user();
+
+        $request->validate([
+            'id_grupo' => 'required|exists:grupo,id',
+            'id_gestion' => 'required|exists:gestion_academica,id',
+            'horarios' => 'required|array|min:1',
+            'horarios.*.id_horario' => 'required|exists:horario,id',
+            'horarios.*.id_aula' => 'required|exists:aula,id',
+            'horarios.*.codigo_docente' => 'required|exists:docente,codigo'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Crear grupo_materia
+            $grupoMateria = GrupoMateria::create([
+                'sigla_materia' => $sigla,
+                'id_grupo' => $request->id_grupo,
+                'id_gestion' => $request->id_gestion
+            ]);
+
+            // Crear horarios para el grupo_materia
+            foreach ($request->horarios as $horarioData) {
+                GrupoMateriaHorario::create([
+                    'id_grupo_materia' => $grupoMateria->id,
+                    'id_horario' => $horarioData['id_horario'],
+                    'id_aula' => $horarioData['id_aula'],
+                    'codigo_docente' => $horarioData['codigo_docente']
+                ]);
+            }
+
+            // Registrar en bitácora
+            $this->registrarBitacoraSegura('Asignación', 'GrupoMateria', $grupoMateria->id, $user->id, 
+                "Asignó grupo {$grupoMateria->grupo->nombre} a materia {$materia->sigla}");
+
+            DB::commit();
+
+            return redirect()->route('admin.materias.show', $sigla)
+                ->with('success', 'Grupo asignado a la materia exitosamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error al asignar grupo a la materia: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    // ... (Los métodos auxiliares getCambios, registrarBitacoraSegura, etc. permanecen igual) ...
     private function getCambios($antes, $despues)
     {
         $cambios = [];
@@ -563,29 +595,84 @@ public function storeAsignarAulas(Request $request, $sigla)
         return implode(', ', $cambios);
     }
 
-/**
- * Obtener materias para docente
- */
-private function getMateriasForDocente($user)
-{
-    $docente = $user->docente;
-    
-    if (!$docente) {
-        return collect();
+    private function registrarBitacoraSegura($accion, $entidad, $entidad_id, $usuario_id, $detalles = null)
+    {
+        try {
+            $entidad_id_segura = is_numeric($entidad_id) ? $entidad_id : null;
+            $descripcion_completa = $detalles;
+            
+            if ($entidad_id && !is_numeric($entidad_id)) {
+                $descripcion_completa .= " (Sigla: {$entidad_id})";
+            }
+            
+            BitacoraController::registrar(
+                $accion,
+                $entidad,
+                $entidad_id_segura,
+                $usuario_id,
+                null,
+                $descripcion_completa
+            );
+            
+        } catch (\Exception $e) {
+            try {
+                DB::table('auditorias')->insert([
+                    'id_users' => $usuario_id,
+                    'accion' => $accion,
+                    'entidad' => $entidad,
+                    'entidad_id' => $entidad_id_segura,
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'descripcion' => $descripcion_completa,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e2) {
+                Log::error('Error en bitácora: ' . $e2->getMessage());
+            }
+        }
     }
 
-    try {
-        // CORREGIDO: Usar id_docente
-        return Materia::whereHas('grupoMaterias.horarios', function($query) use ($docente) {
-            $query->where('id_docente', $docente->codigo); // CORREGIDO AQUÍ
-        })
-        ->with(['categoria:id,nombre'])
-        ->orderBy('sigla')
-        ->get();
-
-    } catch (\Exception $e) {
-        \Log::error('Error en getMateriasForDocente: ' . $e->getMessage());
-        return collect();
+    // Métodos de API permanecen igual...
+    public function getHorarios()
+    {
+        try {
+            $horarios = Horario::all();
+            return response()->json($horarios);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al cargar horarios'], 500);
+        }
     }
-}
+
+    public function getAulas()
+    {
+        try {
+            $aulas = Aula::all();
+            return response()->json($aulas);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al cargar aulas'], 500);
+        }
+    }
+
+    private function getMateriasForDocente($user)
+    {
+        $docente = $user->docente;
+        
+        if (!$docente) {
+            return collect();
+        }
+
+        try {
+            return Materia::whereHas('grupoMaterias.horarios', function($query) use ($docente) {
+                $query->where('id_docente', $docente->codigo);
+            })
+            ->with(['categoria:id,nombre'])
+            ->orderBy('sigla')
+            ->get();
+
+        } catch (\Exception $e) {
+            Log::error('Error en getMateriasForDocente: ' . $e->getMessage());
+            return collect();
+        }
+    }
 }
