@@ -4078,7 +4078,6 @@
             "time": "2025-07-11T13:20:48+00:00"
         },
         {
-<<<<<<< HEAD
             "name": "simplesoftwareio/simple-qrcode",
             "version": "4.2.0",
             "source": {
@@ -4120,31 +4119,6 @@
                 "psr-4": {
                     "SimpleSoftwareIO\\QrCode\\": "src"
                 }
-=======
-            "name": "shuchkin/simplexlsxgen",
-            "version": "1.5.12",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/shuchkin/simplexlsxgen.git",
-                "reference": "88c35de247e386cc6397cd1e234070a980d50a88"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/shuchkin/simplexlsxgen/zipball/88c35de247e386cc6397cd1e234070a980d50a88",
-                "reference": "88c35de247e386cc6397cd1e234070a980d50a88",
-                "shasum": ""
-            },
-            "require": {
-                "ext-mbstring": "*",
-                "ext-zlib": "*",
-                "php": ">=5.4"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/SimpleXLSXGen.php"
-                ]
->>>>>>> a6501af (reportes)
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -4152,7 +4126,6 @@
             ],
             "authors": [
                 {
-<<<<<<< HEAD
                     "name": "Simple Software LLC",
                     "email": "support@simplesoftware.io"
                 }
@@ -4171,29 +4144,6 @@
                 "source": "https://github.com/SimpleSoftwareIO/simple-qrcode/tree/4.2.0"
             },
             "time": "2021-02-08T20:43:55+00:00"
-=======
-                    "name": "Sergey Shuchkin (SMSPILOT)",
-                    "email": "sergey.shuchkin@gmail.com",
-                    "homepage": "https://shuchkin.ru/"
-                }
-            ],
-            "description": "Export data to Excel XLSx file. PHP XLSX generator.",
-            "homepage": "https://github.com/shuchkin/simplexlsxgen",
-            "keywords": [
-                "backend",
-                "creator",
-                "excel",
-                "generator",
-                "php",
-                "writer",
-                "xlsx"
-            ],
-            "support": {
-                "issues": "https://github.com/shuchkin/simplexlsxgen/issues",
-                "source": "https://github.com/shuchkin/simplexlsxgen/tree/1.5.12"
-            },
-            "time": "2025-10-24T15:11:29+00:00"
->>>>>>> a6501af (reportes)
         },
         {
             "name": "shuchkin/simplexlsxgen",
