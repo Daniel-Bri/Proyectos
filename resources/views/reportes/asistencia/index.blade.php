@@ -17,11 +17,11 @@
                 </p>
             </div>
             <!-- Botón Volver al Dashboard -->
-            <a href="{{ route('admin.dashboard') }}" 
-               class="inline-flex items-center justify-center px-4 py-2 bg-[#F2E3D5] hover:bg-[#e6d7c9] text-deep-teal-800 font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Volver al Dashboard
-            </a>
+<a href="{{ route('dashboard') }}" 
+   class="inline-flex items-center justify-center px-4 py-2 bg-[#F2E3D5] hover:bg-[#e6d7c9] text-deep-teal-800 font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm">
+    <i class="fas fa-arrow-left mr-2"></i>
+    Volver al Dashboard
+</a>
         </div>
     </div>
 
