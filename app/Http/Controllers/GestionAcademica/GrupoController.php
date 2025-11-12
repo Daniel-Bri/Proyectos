@@ -4,8 +4,8 @@ namespace App\Http\Controllers\GestionAcademica;
 
 use App\Http\Controllers\Controller;
 use App\Models\Grupo;
-use App\Models\Carrera;
-use App\Models\GestionAcademica;
+//use App\Models\Carrera;
+//use App\Models\GestionAcademica;
 use App\Models\Materia;
 use App\Models\GrupoMateria;
 use App\Http\Controllers\Administracion\BitacoraController;
