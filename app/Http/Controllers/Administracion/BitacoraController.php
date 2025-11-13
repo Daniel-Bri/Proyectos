@@ -115,7 +115,6 @@ class BitacoraController extends Controller
             
         } catch (\Exception $e) {
             // Si hay error, solo logear pero no romper la aplicación
-            \Log::error('Error en bitácora: ' . $e->getMessage());
             return null;
         }
     }
