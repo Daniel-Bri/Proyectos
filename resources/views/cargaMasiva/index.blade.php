@@ -74,7 +74,7 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <a href="{{ url('/admin/dashboard') }}"
+                    <a href="{{ route('dashboard') }}"
                        class="inline-flex items-center gap-2 bg-cream-200 text-deep-teal-700 px-3 py-2 rounded-lg font-medium hover:bg-cream-300 transition shadow-md">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
