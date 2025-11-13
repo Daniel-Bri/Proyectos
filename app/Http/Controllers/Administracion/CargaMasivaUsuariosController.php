@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UsuariosImport;
+//Carga masiva
 
 class CargaMasivaUsuariosController extends Controller
 {
