@@ -66,13 +66,6 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <a href="{{ url('/coordinador/horarios') }}"
-                       class="inline-flex items-center gap-2 bg-cream-200 text-deep-teal-700 px-3 py-2 rounded-lg font-medium hover:bg-cream-300 transition shadow-md">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        Volver a Horarios
-                    </a>
                     <a href="{{ url('/coordinador/dashboard') }}"
                        class="inline-flex items-center gap-2 bg-deep-teal-600 text-cream-200 px-3 py-2 rounded-lg font-medium hover:bg-deep-teal-500 transition shadow-md border border-deep-teal-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -13,7 +13,7 @@ Route::prefix('coordinador')
     ->as('coordinador.')
     ->group(function () {
         Route::get('/dashboard', function () {
-            return view('coordinador.dashboard');
+            return view('dashboard.index');
         })->name('dashboard');
         
         // =========================================================================

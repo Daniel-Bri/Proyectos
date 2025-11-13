@@ -15,6 +15,7 @@
         "maatwebsite/excel": "^1.1",
         "phpoffice/phpspreadsheet": "^5.2",
         "shuchkin/simplexlsxgen": "^1.5",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.21"
     },
     "require-dev": {
